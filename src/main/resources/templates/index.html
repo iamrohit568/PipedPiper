@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Yt-Scrapper Pro</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: 'class' };
+  </script>
+  <style>
+    @keyframes float3D {
+      0% { transform: translateY(0px) rotateX(0deg) rotateY(0deg); }
+      50% { transform: translateY(-20px) rotateX(10deg) rotateY(10deg); }
+      100% { transform: translateY(0px) rotateX(0deg) rotateY(0deg); }
+    }
+
+    .floating-3d {
+      animation: float3D 4s ease-in-out infinite;
+      transform-style: preserve-3d;
+    }
+
+    .character {
+      filter: drop-shadow(0 10px 8px rgba(0,0,0,0.2));
+      transition: all 0.3s ease;
+    }
+  </style>
+</head>
+<body class="font-sans text-black dark:text-white dark:bg-gray-800 transition-colors duration-500 overflow-hidden">
+
+  <!-- Background Icons -->
+  <div class="fixed inset-0 pointer-events-none z-0">
+    <div class="absolute text-4xl opacity-10 dark:opacity-5" style="top: 20%; left: 15%; animation: float3D 6s infinite">🔍</div>
+    <div class="absolute text-4xl opacity-10 dark:opacity-5" style="top: 60%; right: 20%; animation: float3D 5s infinite 1s">📊</div>
+    <div class="absolute text-4xl opacity-10 dark:opacity-5" style="top: 40%; left: 25%; animation: float3D 7s infinite 2s">🎥</div>
+  </div>
+
+  <!-- Toggle Mode -->
+  <div class="fixed top-6 right-6 z-50">
+    <div id="toggleWrapper" onclick="toggleMode()"
+         class="w-32 h-12 bg-white dark:bg-gray-900 rounded-full cursor-pointer relative flex items-center transition-all duration-500 shadow-2xl hover:scale-105 border-2 border-gray-200 dark:border-gray-700">
+      <div id="toggleCircle" class="absolute left-1 w-10 h-10 rounded-full bg-red-500 transition-all duration-500 flex items-center justify-center shadow-md">
+        <span id="toggleIcon" class="text-white text-xl">🌞</span>
+      </div>
+      <div class="flex justify-between w-full px-4">
+        <span id="dayLabel" class="text-sm font-bold ml-8 dark:text-white">DAY</span>
+        <span id="nightLabel" class="text-sm font-bold mr-2 text-gray-400 hidden">NIGHT</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Layout Container -->
+  <div class="flex items-center justify-center h-screen px-4 relative z-10">
+    
+    <!-- Avatar Left of Form -->
+    <img src="/images/avtar1.png" alt="Avatar" class="w-50 h-60 mr-1 animate-bounce hidden sm:block" />
+
+    <!-- Main Form -->
+    <form th:action="@{/processing}" method="post"
+          class="relative transform scale-[0.7] bg-white dark:bg-gray-900 p-10 rounded-3xl shadow-2xl transition-all duration-700 w-full max-w-2xl
+                 hover:rotate-x-2 hover:rotate-y-2 hover:translate-z-10" 
+          style="transform-style: preserve-3d">
+
+      <!-- Title -->
+      <h1 class="text-4xl sm:text-4xl lg:text-5xl font-bold mb-8 text-center">
+        <span class="text-red-500 dark:text-red-400">▶</span> YouTube Inspector
+      </h1>
+
+      <!-- Input -->
+      <div class="relative mb-8">
+        <input type="text" id="videoLink" name="videoLink" required
+          class="w-full border-4 border-gray-300 dark:border-gray-600 rounded-xl py-4 px-6 text-xl bg-white dark:bg-gray-800 focus:outline-none focus:border-pink-500 focus:ring-8 focus:ring-pink-200 dark:focus:ring-pink-900 shadow-lg transition-all duration-300 hover:scale-[1.01]">
+        <div class="absolute -bottom-8 right-0 text-2xl animate-bounce">⬇️</div>
+      </div>
+
+      <!-- Button -->
+      <button type="submit"
+        class="mt-6 bg-gradient-to-r from-pink-500 to-red-500 text-2xl hover:from-pink-600 hover:to-red-600 text-white font-bold py-4 px-12 rounded-full transition-all duration-500 shadow-2xl hover:shadow-3xl hover:scale-105 relative overflow-hidden
+               before:content-[''] before:absolute before:inset-0 before:bg-white before:opacity-0 hover:before:opacity-10 before:transition-opacity before:duration-300">
+        🚀 Scrap Video
+        <div class="absolute -top-1 -right-1 w-6 h-6 bg-white rounded-full animate-ping"></div>
+      </button>
+
+    </form>
+
+    <!-- GIF Image on Right Side of Form -->
+    <img src="/images/Scnx.gif" alt="GIF" class="w-50 h-55 ml-1 hidden sm:block" />
+
+  </div>
+
+  <script>
+    function toggleMode() {
+      const html = document.documentElement;
+      const circle = document.getElementById('toggleCircle');
+      const icon = document.getElementById('toggleIcon');
+      const dayLabel = document.getElementById('dayLabel');
+      const nightLabel = document.getElementById('nightLabel');
+
+      html.classList.toggle('dark');
+      const isDark = html.classList.contains('dark');
+
+      if (isDark) {
+        circle.style.transform = 'translateX(72px)';
+        icon.textContent = '🌙';
+        dayLabel.classList.add('hidden');
+        nightLabel.classList.remove('hidden');
+        circle.classList.remove('bg-red-500');
+        circle.classList.add('bg-gray-800');
+      } else {
+        circle.style.transform = 'translateX(0)';
+        icon.textContent = '🌞';
+        dayLabel.classList.remove('hidden');
+        nightLabel.classList.add('hidden');
+        circle.classList.remove('bg-gray-800');
+        circle.classList.add('bg-red-500');
+      }
+    }
+  </script>
+</body>
+</html>
