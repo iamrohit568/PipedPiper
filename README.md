@@ -134,4 +134,3 @@ Distributed under the MIT License. See `LICENSE` for details.
 3. **`ytController.java`**: Handles requests and serves Thymeleaf views
 4. **`pom.xml`**: Manages Spring Boot and Thymeleaf dependencies
 
-Add screenshots of your UI in action for better visual demonstration!
