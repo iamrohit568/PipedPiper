@@ -112,56 +112,103 @@ public class ytController {
     }
 
     @PostMapping("/search")
-public String handleSearch(
-        @RequestParam String keywords,
-        @RequestParam(defaultValue = "10") int maxResults,
-        @RequestParam(defaultValue = "viewCount") String sortBy,
-        Model model) {
+    public String handleSearch(
+            @RequestParam String keywords,
+            @RequestParam(defaultValue = "10") int maxResults,
+            @RequestParam(defaultValue = "viewCount") String sortBy,
+            Model model) {
 
-    try {
-        JsonNode searchResults = youtubeservice.searchVideos(keywords, maxResults, sortBy);
-        
-        List<String> videoIds = new ArrayList<>();
-        for (JsonNode item : searchResults.path("items")) {
-            videoIds.add(item.path("id").path("videoId").asText());
-        }
-
-        List<JsonNode> videoDetails = youtubeservice.getVideoDetailsBatch(videoIds);
-        
-        List<Map<String, String>> videos = new ArrayList<>();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM d, yyyy");
-        
-        for (int i = 0; i < searchResults.path("items").size(); i++) {
-            JsonNode searchItem = searchResults.path("items").get(i);
-            JsonNode details = videoDetails.get(i);
-
-            Map<String, String> videoData = new HashMap<>();
-            videoData.put("title", searchItem.path("snippet").path("title").asText());
-            videoData.put("thumbnailUrl", searchItem.path("snippet").path("thumbnails").path("high").path("url").asText());
+        try {
+            JsonNode searchResults = youtubeservice.searchVideos(keywords, maxResults, sortBy);
             
-            // Format the date properly
-            try {
-                Instant instant = Instant.parse(searchItem.path("snippet").path("publishedAt").asText());
-                videoData.put("publishedAt", formatter.format(instant.atZone(java.time.ZoneId.systemDefault())));
-            } catch (DateTimeParseException e) {
-                videoData.put("publishedAt", searchItem.path("snippet").path("publishedAt").asText());
+            List<String> videoIds = new ArrayList<>();
+            for (JsonNode item : searchResults.path("items")) {
+                videoIds.add(item.path("id").path("videoId").asText());
             }
+
+            List<JsonNode> videoDetails = youtubeservice.getVideoDetailsBatch(videoIds);
             
-            videoData.put("viewCount", details.path("statistics").path("viewCount").asText());
-            videoData.put("url", "https://www.youtube.com/watch?v=" + searchItem.path("id").path("videoId").asText());
+            List<Map<String, String>> videos = new ArrayList<>();
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM d, yyyy");
+            
+            for (int i = 0; i < searchResults.path("items").size(); i++) {
+                JsonNode searchItem = searchResults.path("items").get(i);
+                JsonNode details = videoDetails.get(i);
 
-            videos.add(videoData);
+                Map<String, String> videoData = new HashMap<>();
+                videoData.put("videoId", searchItem.path("id").path("videoId").asText());
+                videoData.put("title", searchItem.path("snippet").path("title").asText());
+                videoData.put("thumbnailUrl", searchItem.path("snippet").path("thumbnails").path("high").path("url").asText());
+                
+                // Format the date properly
+                try {
+                    Instant instant = Instant.parse(searchItem.path("snippet").path("publishedAt").asText());
+                    videoData.put("publishedAt", formatter.format(instant.atZone(java.time.ZoneId.systemDefault())));
+                } catch (DateTimeParseException e) {
+                    videoData.put("publishedAt", searchItem.path("snippet").path("publishedAt").asText());
+                }
+                
+                videoData.put("viewCount", details.path("statistics").path("viewCount").asText());
+                videoData.put("url", "https://www.youtube.com/watch?v=" + searchItem.path("id").path("videoId").asText());
+
+                videos.add(videoData);
+            }
+
+            model.addAttribute("keywords", keywords);
+            model.addAttribute("videos", videos);
+            return "search-results";
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "error";
         }
-
-        model.addAttribute("keywords", keywords);
-        model.addAttribute("videos", videos);
-        return "search-results";
-
-    } catch (Exception e) {
-        e.printStackTrace();
-        return "error";
     }
-}
 
-    
+    // NEW METHOD: Handle analyze button from search results
+    @GetMapping("/analyze")
+    public String analyzeVideo(@RequestParam String videoId, Model model) {
+        try {
+            // Get comprehensive video details including statistics
+            JsonNode videoDetails = youtubeservice.getVideoDetailsWithStats(videoId);
+            JsonNode channelDetails = youtubeservice.getChannelDetails(
+                videoDetails.path("snippet").path("channelId").asText()
+            );
+
+            // Extract video information
+            JsonNode snippet = videoDetails.path("snippet");
+            JsonNode statistics = videoDetails.path("statistics");
+            
+            // Extract channel information
+            JsonNode channelSnippet = channelDetails.path("snippet");
+            JsonNode channelStatistics = channelDetails.path("statistics");
+
+            // Video details
+            model.addAttribute("videoId", videoId);
+            model.addAttribute("title", snippet.path("title").asText());
+            model.addAttribute("description", snippet.path("description").asText());
+            model.addAttribute("thumbnailUrl", snippet.path("thumbnails").path("maxres").path("url").asText());
+            model.addAttribute("publishedAt", snippet.path("publishedAt").asText());
+            
+            // Video statistics
+            model.addAttribute("viewCount", statistics.path("viewCount").asText());
+            model.addAttribute("likeCount", statistics.path("likeCount").asText());
+            model.addAttribute("commentCount", statistics.path("commentCount").asText());
+            
+            // Channel details
+            model.addAttribute("channelTitle", snippet.path("channelTitle").asText());
+            model.addAttribute("channelId", snippet.path("channelId").asText());
+            model.addAttribute("channelThumbnail", channelSnippet.path("thumbnails").path("high").path("url").asText());
+            model.addAttribute("channelDescription", channelSnippet.path("description").asText());
+            model.addAttribute("subscriberCount", channelStatistics.path("subscriberCount").asText());
+            model.addAttribute("videoCount", channelStatistics.path("videoCount").asText());
+            
+            // YouTube URL
+            model.addAttribute("youtubeUrl", "https://www.youtube.com/watch?v=" + videoId);
+
+            return "video-analytics";
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "error";
+        }
+    }
 }

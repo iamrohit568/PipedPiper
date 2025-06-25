@@ -1,256 +1,339 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>YouTube Analytics Pro</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <style>
-    @keyframes float {
-      0%, 100% { transform: translateY(0px) rotate(0deg); }
-      50% { transform: translateY(-20px) rotate(5deg); }
-    }
-    
-    @keyframes pulse-glow {
-      0%, 100% { box-shadow: 0 0 20px rgba(239, 68, 68, 0.3); }
-      50% { box-shadow: 0 0 40px rgba(239, 68, 68, 0.6); }
-    }
-    
-    @keyframes sparkle {
-      0%, 100% { opacity: 0; transform: scale(0); }
-      50% { opacity: 1; transform: scale(1); }
-    }
-    
-    .floating { animation: float 6s ease-in-out infinite; }
-    .pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
-    .sparkle { animation: sparkle 2s ease-in-out infinite; }
-    
-    .glass-card {
-      background: rgba(255, 255, 255, 0.1);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-    }
-    
-    .neon-text {
-      text-shadow: 0 0 10px rgba(239, 68, 68, 0.5),
-                   0 0 20px rgba(239, 68, 68, 0.3),
-                   0 0 30px rgba(239, 68, 68, 0.2);
-    }
-    
-    .feature-card {
-      background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(147, 51, 234, 0.1));
-      backdrop-filter: blur(15px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      transition: all 0.3s ease;
-    }
-    
-    .feature-card:hover {
-      transform: translateY(-10px) scale(1.05);
-      box-shadow: 0 20px 40px rgba(239, 68, 68, 0.3);
-    }
-  </style>
-</head>
-<body class="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-red-900 text-white overflow-x-hidden">
-
-  <!-- Animated Background Elements -->
-  <div class="fixed inset-0 pointer-events-none z-0">
-    <div class="absolute top-20 left-10 w-32 h-32 bg-red-500/20 rounded-full filter blur-3xl floating"></div>
-    <div class="absolute bottom-20 right-10 w-40 h-40 bg-purple-500/20 rounded-full filter blur-3xl floating" style="animation-delay: -2s;"></div>
-    <div class="absolute top-1/2 left-1/4 w-24 h-24 bg-pink-500/20 rounded-full filter blur-2xl floating" style="animation-delay: -4s;"></div>
-    
-    <!-- Sparkle Effects -->
-    <div class="absolute top-1/4 right-1/3 w-2 h-2 bg-white rounded-full sparkle"></div>
-    <div class="absolute bottom-1/3 left-1/3 w-1 h-1 bg-yellow-300 rounded-full sparkle" style="animation-delay: -1s;"></div>
-    <div class="absolute top-2/3 right-1/4 w-1.5 h-1.5 bg-blue-300 rounded-full sparkle" style="animation-delay: -3s;"></div>
-  </div>
-
-  <!-- Header -->
-  <nav class="relative z-10 p-6">
-    <div class="max-w-7xl mx-auto flex justify-between items-center">
-      <div class="flex items-center space-x-3">
-        <div class="w-12 h-12 bg-gradient-to-br from-red-500 to-pink-500 rounded-xl flex items-center justify-center pulse-glow">
-          <i class="fab fa-youtube text-white text-xl"></i>
-        </div>
-        <h1 class="text-2xl font-bold neon-text">YouTube Analytics Pro</h1>
-      </div>
-      <div class="flex space-x-4">
-        <a href="#features" class="px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 transition-all">Features</a>
-        <a href="#about" class="px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 transition-all">About</a>
-      </div>
-    </div>
-  </nav>
-
-  <!-- Main Content -->
-  <div class="relative z-10 max-w-6xl mx-auto px-6 py-12">
-    
-    <!-- Hero Section -->
-    <div class="text-center mb-16">
-      <h1 class="text-6xl md:text-8xl font-bold mb-6 neon-text">
-        YouTube <span class="bg-gradient-to-r from-red-500 to-pink-500 bg-clip-text text-transparent">Inspector</span>
-      </h1>
-      <p class="text-xl md:text-2xl text-gray-300 mb-8 max-w-3xl mx-auto">
-        Discover, analyze, and explore YouTube content like never before. 
-        Get detailed insights or find trending videos with powerful search capabilities.
-      </p>
-    </div>
-
-    <!-- Feature Cards -->
-    <div class="grid md:grid-cols-2 gap-8 mb-16">
-      
-      <!-- Video Scraper Card -->
-      <div class="feature-card rounded-3xl p-8 group">
-        <div class="flex items-center mb-6">
-          <div class="w-16 h-16 bg-gradient-to-br from-red-500 to-pink-500 rounded-2xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
-            <i class="fas fa-search text-white text-2xl"></i>
-          </div>
-          <div>
-            <h2 class="text-2xl font-bold mb-2">Video Analyzer</h2>
-            <p class="text-gray-300">Extract detailed information from any YouTube video</p>
-          </div>
-        </div>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Piped Piper | YouTube Analytics Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Base styles */
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
         
-        <form th:action="@{/processing}" method="post" class="space-y-6" onsubmit="return validateForm()">
-          <div class="relative">
-            <input type="text" 
-                   id="videoLink" 
-                   name="videoLink" 
-                   required
-                   placeholder="Paste YouTube video URL here..."
-                   class="w-full bg-white/10 border-2 border-white/20 rounded-2xl py-4 px-6 text-white placeholder-gray-400 focus:outline-none focus:border-red-500 focus:ring-4 focus:ring-red-500/20 transition-all">
-            <div class="absolute right-4 top-1/2 transform -translate-y-1/2">
-              <i class="fas fa-link text-gray-400"></i>
-            </div>
-          </div>
-          
-          <button type="submit" 
-            class="w-full bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white font-bold py-4 px-8 rounded-2xl transition-all duration-300 transform hover:scale-105 hover:shadow-2xl">
-        <i class="fas fa-microscope mr-2"></i>
-        Analyze Video
-    </button>
-</form>
-      </div>
-
-      <!-- Keyword Search Card -->
-      <div class="feature-card rounded-3xl p-8 group">
-        <div class="flex items-center mb-6">
-          <div class="w-16 h-16 bg-gradient-to-br from-purple-500 to-blue-500 rounded-2xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
-            <i class="fas fa-fire text-white text-2xl"></i>
-          </div>
-          <div>
-            <h2 class="text-2xl font-bold mb-2">Trending Finder</h2>
-            <p class="text-gray-300">Find top viewed videos by keywords</p>
-          </div>
-        </div>
+        /* Card styles */
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
         
-        <form th:action="@{/search}" method="post" class="space-y-4">
-          <div class="relative">
-            <input type="text" 
-                   id="keywords" 
-                   name="keywords" 
-                   required
-                   placeholder="Enter keywords (e.g., 'tech reviews')"
-                   class="w-full bg-white/10 border-2 border-white/20 rounded-2xl py-4 px-6 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 focus:ring-4 focus:ring-purple-500/20 transition-all">
-            <div class="absolute right-4 top-1/2 transform -translate-y-1/2">
-              <i class="fas fa-hashtag text-gray-400"></i>
-            </div>
-          </div>
-          
-          <div class="flex space-x-4">
-            <div class="flex-1 relative">
-              <select name="maxResults" 
-                      class="w-full bg-white/10 border-2 border-white/20 rounded-2xl py-4 px-6 text-white focus:outline-none focus:border-purple-500 focus:ring-4 focus:ring-purple-500/20 transition-all appearance-none">
-                <option value="5" class="bg-gray-800">5 Results</option>
-                <option value="10" class="bg-gray-800" selected>10 Results</option>
-                <option value="15" class="bg-gray-800">15 Results</option>
-                <option value="20" class="bg-gray-800">20 Results</option>
-                <option value="25" class="bg-gray-800">25 Results</option>
-              </select>
-              <div class="absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                <i class="fas fa-chevron-down text-gray-400"></i>
-              </div>
-            </div>
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
+        }
+        
+        /* Button styles */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 500;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-primary {
+            background-color: #4f46e5;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #4338ca;
+        }
+        
+        .btn-secondary {
+            background-color: white;
+            color: #4f46e5;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #f8fafc;
+            border-color: #c7d2fe;
+        }
+        
+        /* Form elements */
+        .form-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            transition: border-color 0.2s ease;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #c7d2fe;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+        
+        /* Navbar */
+        .navbar {
+            backdrop-filter: blur(8px);
+            background-color: rgba(255, 255, 255, 0.8);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .mobile-stack {
+                flex-direction: column;
+            }
             
-            <div class="flex-1 relative">
-              <select name="sortBy" 
-                      class="w-full bg-white/10 border-2 border-white/20 rounded-2xl py-4 px-6 text-white focus:outline-none focus:border-purple-500 focus:ring-4 focus:ring-purple-500/20 transition-all appearance-none">
-                <option value="viewCount" class="bg-gray-800" selected>Most Viewed</option>
-                <option value="relevance" class="bg-gray-800">Most Relevant</option>
-                <option value="date" class="bg-gray-800">Most Recent</option>
-                <option value="rating" class="bg-gray-800">Highest Rated</option>
-              </select>
-              <div class="absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                <i class="fas fa-sort text-gray-400"></i>
-              </div>
+            .mobile-full-width {
+                width: 100%;
+            }
+            
+            .mobile-text-center {
+                text-align: center;
+            }
+            
+            .mobile-px-4 {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+            
+            .hero-title {
+                font-size: 2.25rem;
+                line-height: 2.5rem;
+            }
+        }
+        
+        /* Animation */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .animate-fade-in {
+            animation: fadeIn 0.3s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- Navigation -->
+    <nav class="navbar sticky top-0 z-50 py-4 px-6 sm:px-8">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center">
+                    <i class="fab fa-youtube text-white text-lg"></i>
+                </div>
+                <h1 class="text-xl font-semibold text-gray-900">Piped Piper</h1>
             </div>
-          </div>
-          
-          <button type="submit" 
-                  class="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-bold py-4 px-8 rounded-2xl transition-all duration-300 transform hover:scale-105 hover:shadow-2xl">
-            <i class="fas fa-rocket mr-2"></i>
-            Find Trending Videos
-          </button>
-        </form>
-      </div>
-    </div>
+            <div class="hidden md:flex space-x-4">
+                <a href="#features" class="px-4 py-2 text-gray-600 hover:text-indigo-600 transition-colors">Features</a>
+                <a href="#about" class="px-4 py-2 text-gray-600 hover:text-indigo-600 transition-colors">About</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="max-w-7xl mx-auto py-12 px-6 sm:px-8 text-center">
+        <div class="max-w-4xl mx-auto">
+            <h1 class="hero-title text-4xl sm:text-5xl font-bold text-gray-900 mb-4">
+                YouTube <span class="text-indigo-600">Inspector</span> 
+            </h1>
+            <p class="text-xl text-gray-600 mb-8">
+                Get powerful insights into any YouTube video or channel with our comprehensive analytics tools
+            </p>
+        </div>
+    </section>
+
+    <!-- Main Actions Section -->
+    <section class="max-w-6xl mx-auto px-6 sm:px-8 mb-16">
+        <div class="grid md:grid-cols-2 gap-8">
+            <!-- Video Analyzer Card -->
+            <div class="card p-8 animate-fade-in" style="animation-delay: 0.1s;">
+                <div class="flex items-center space-x-4 mb-6">
+                    <div class="w-14 h-14 bg-indigo-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-search text-indigo-600 text-xl"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900 mb-1">Video Scrapper</h2>
+                        <p class="text-gray-600">Extract detailed information from any YouTube video</p>
+                    </div>
+                </div>
+                
+                <form th:action="@{/processing}" method="post" class="space-y-6" onsubmit="return validateForm()">
+                    <div class="relative">
+                        <input type="text" 
+                               id="videoLink" 
+                               name="videoLink" 
+                               required
+                               placeholder="Paste YouTube video URL here..."
+                               class="form-input">
+                        <div class="absolute right-4 top-1/2 transform -translate-y-1/2">
+                            <i class="fas fa-link text-gray-400"></i>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" 
+                            class="btn btn-primary w-full">
+                        <i class="fas fa-microscope mr-2"></i>
+                        Analyze Video
+                    </button>
+                </form>
+            </div>
+
+            <!-- Trending Finder Card -->
+            <div class="card p-8 animate-fade-in" style="animation-delay: 0.2s;">
+                <div class="flex items-center space-x-4 mb-6">
+                    <div class="w-14 h-14 bg-indigo-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-fire text-indigo-600 text-xl"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900 mb-1">Trending Finder</h2>
+                        <p class="text-gray-600">Discover top videos by keywords</p>
+                    </div>
+                </div>
+                
+                <form th:action="@{/search}" method="post" class="space-y-6">
+                    <div class="relative">
+                        <input type="text" 
+                               id="keywords" 
+                               name="keywords" 
+                               required
+                               placeholder="Enter keywords (e.g., 'tech reviews')"
+                               class="form-input">
+                        <div class="absolute right-4 top-1/2 transform -translate-y-1/2">
+                            <i class="fas fa-hashtag text-gray-400"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="relative">
+                            <select name="maxResults" 
+                                    class="form-input appearance-none">
+                                <option value="5">5 Results</option>
+                                <option value="10" selected>10 Results</option>
+                                <option value="15">15 Results</option>
+                                <option value="20">20 Results</option>
+                                <option value="25">25 Results</option>
+                            </select>
+                            <div class="absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                                <i class="fas fa-chevron-down text-gray-400"></i>
+                            </div>
+                        </div>
+                        
+                        <div class="relative">
+                            <select name="sortBy" 
+                                    class="form-input appearance-none">
+                                <option value="viewCount" selected>Most Viewed</option>
+                                <option value="relevance">Most Relevant</option>
+                                <option value="date">Most Recent</option>
+                                <option value="rating">Highest Rated</option>
+                            </select>
+                            <div class="absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                                <i class="fas fa-sort text-gray-400"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" 
+                            class="btn btn-primary w-full">
+                        <i class="fas fa-rocket mr-2"></i>
+                        Find Trending Videos
+                    </button>
+                </form>
+            </div>
+        </div>
+    </section>
 
     <!-- Features Section -->
-    <div id="features" class="mb-16">
-      <h2 class="text-4xl font-bold text-center mb-12 neon-text">Powerful Features</h2>
-      <div class="grid md:grid-cols-3 gap-8">
-        <div class="glass-card rounded-2xl p-6 text-center group hover:scale-105 transition-transform">
-          <div class="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:rotate-12 transition-transform">
-            <i class="fas fa-chart-line text-white text-2xl"></i>
-          </div>
-          <h3 class="text-xl font-bold mb-2">Analytics</h3>
-          <p class="text-gray-300">Get detailed video metrics and insights</p>
+    <section id="features" class="max-w-7xl mx-auto px-6 sm:px-8 py-12 bg-indigo-50 rounded-3xl mb-16">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl font-bold text-gray-900 mb-4">Powerful Features</h2>
+            <p class="text-gray-600 max-w-2xl mx-auto">Everything you need to analyze and understand YouTube content</p>
         </div>
         
-        <div class="glass-card rounded-2xl p-6 text-center group hover:scale-105 transition-transform">
-          <div class="w-16 h-16 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:rotate-12 transition-transform">
-            <i class="fas fa-copy text-white text-2xl"></i>
-          </div>
-          <h3 class="text-xl font-bold mb-2">Easy Copy</h3>
-          <p class="text-gray-300">One-click copy for titles, tags, and descriptions</p>
+        <div class="grid md:grid-cols-3 gap-8">
+            <div class="card p-6 text-center hover:border-indigo-200 transition-colors">
+                <div class="w-16 h-16 bg-indigo-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-chart-line text-indigo-600 text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">Comprehensive Analytics</h3>
+                <p class="text-gray-600">Get detailed video metrics and performance insights</p>
+            </div>
+            
+            <div class="card p-6 text-center hover:border-indigo-200 transition-colors">
+                <div class="w-16 h-16 bg-indigo-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-copy text-indigo-600 text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">One-Click Copy</h3>
+                <p class="text-gray-600">Easily copy titles, tags, and descriptions</p>
+            </div>
+            
+            <div class="card p-6 text-center hover:border-indigo-200 transition-colors">
+                <div class="w-16 h-16 bg-indigo-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-bolt text-indigo-600 text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">Instant Results</h3>
+                <p class="text-gray-600">Fast processing with our optimized API</p>
+            </div>
         </div>
-        
-        <div class="glass-card rounded-2xl p-6 text-center group hover:scale-105 transition-transform">
-          <div class="w-16 h-16 bg-gradient-to-br from-pink-500 to-red-500 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:rotate-12 transition-transform">
-            <i class="fas fa-lightning-bolt text-white text-2xl"></i>
-          </div>
-          <h3 class="text-xl font-bold mb-2">Lightning Fast</h3>
-          <p class="text-gray-300">Instant results with our optimized API</p>
-        </div>
-      </div>
-    </div>
+    </section>
 
     <!-- Stats Section -->
-    <div class="glass-card rounded-3xl p-8 mb-16">
-      <div class="grid md:grid-cols-4 gap-8 text-center">
-        <div>
-          <div class="text-4xl font-bold text-red-500 mb-2">1M+</div>
-          <div class="text-gray-300">Videos Analyzed</div>
+    <section class="max-w-7xl mx-auto px-6 sm:px-8 mb-16">
+        <div class="card p-8">
+            <div class="grid md:grid-cols-4 gap-8 text-center">
+                <div>
+                    <div class="text-3xl font-bold text-indigo-600 mb-2">100+</div>
+                    <div class="text-gray-600">Videos Analyzed</div>
+                </div>
+                <div>
+                    <div class="text-3xl font-bold text-indigo-600 mb-2">50+</div>
+                    <div class="text-gray-600">Happy Users</div>
+                </div>
+                <div>
+                    <div class="text-3xl font-bold text-indigo-600 mb-2">99.9%</div>
+                    <div class="text-gray-600">Uptime</div>
+                </div>
+                <div>
+                    <div class="text-3xl font-bold text-indigo-600 mb-2">24/7</div>
+                    <div class="text-gray-600">Available</div>
+                </div>
+            </div>
         </div>
-        <div>
-          <div class="text-4xl font-bold text-purple-500 mb-2">50K+</div>
-          <div class="text-gray-300">Happy Users</div>
-        </div>
-        <div>
-          <div class="text-4xl font-bold text-blue-500 mb-2">99.9%</div>
-          <div class="text-gray-300">Uptime</div>
-        </div>
-        <div>
-          <div class="text-4xl font-bold text-green-500 mb-2">24/7</div>
-          <div class="text-gray-300">Available</div>
-        </div>
-      </div>
-    </div>
-  </div>
+    </section>
 
-  <!-- Footer -->
-  <footer class="relative z-10 text-center py-8 text-gray-400">
-    <p>&copy; 2025 YouTube Analytics Pro. Made with ❤️ for content creators.</p>
-  </footer>
+    <!-- Footer -->
+    <footer class="py-8 px-6 sm:px-8 border-t border-gray-200">
+        <div class="max-w-7xl mx-auto">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="flex items-center space-x-3 mb-4 md:mb-0">
+                    <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
+                        <i class="fab fa-youtube text-white text-sm"></i>
+                    </div>
+                    <span class="text-gray-900 font-medium">Piped Piper</span>
+                </div>
+                <div class="flex space-x-6">
+                    <a href="#" class="text-gray-500 hover:text-gray-700">Terms</a>
+                    <a href="#" class="text-gray-500 hover:text-gray-700">Privacy</a>
+                    <a href="#" class="text-gray-500 hover:text-gray-700">Contact</a>
+                </div>
+            </div>
+            <div class="mt-6 text-center md:text-left text-sm text-gray-500">
+                &copy; 2025 Piped Piper. All rights reserved.
+            </div>
+        </div>
+    </footer>
 
+    <script>
+        function validateForm() {
+            const videoLink = document.getElementById('videoLink').value;
+            if (!videoLink.includes('youtube.com') && !videoLink.includes('youtu.be')) {
+                alert('Please enter a valid YouTube URL');
+                return false;
+            }
+            return true;
+        }
+    </script>
 </body>
-</html>
+</html> 

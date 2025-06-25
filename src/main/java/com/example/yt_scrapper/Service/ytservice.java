@@ -105,6 +105,32 @@ public class ytservice {
         return objectMapper.readTree(response).path("items").get(0).path("snippet");
     }
 
+    // NEW METHOD: Get video details with statistics
+    public JsonNode getVideoDetailsWithStats(String videoId) throws Exception {
+        String apiUrl = youtubeConfig.getApiUrl();
+        String url = String.format("%s?part=snippet,statistics&id=%s&key=%s",
+                apiUrl, videoId, youtubeConfig.getApiKey());
+
+        RestTemplate restTemplate = new RestTemplate();
+        String response = restTemplate.getForObject(url, String.class);
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        return objectMapper.readTree(response).path("items").get(0);
+    }
+
+    // NEW METHOD: Get channel details
+    public JsonNode getChannelDetails(String channelId) throws Exception {
+        String channelUrl = "https://www.googleapis.com/youtube/v3/channels";
+        String url = String.format("%s?part=snippet,statistics&id=%s&key=%s",
+                channelUrl, channelId, youtubeConfig.getApiKey());
+
+        RestTemplate restTemplate = new RestTemplate();
+        String response = restTemplate.getForObject(url, String.class);
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        return objectMapper.readTree(response).path("items").get(0);
+    }
+
     public JsonNode searchVideos(String keywords, int maxResults, String sortBy) throws Exception {
         String url = String.format("%s?part=snippet&q=%s&maxResults=%d&type=video&order=%s&key=%s",
                 youtubeConfig.getSearchApiUrl(),

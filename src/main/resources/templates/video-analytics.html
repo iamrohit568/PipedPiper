@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Analytics | Piped Piper</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Reuse styles from index.html */
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 500;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-primary {
+            background-color: #4f46e5;
+            color: white;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            border-left: 4px solid #4f46e5;
+        }
+        
+        @media (max-width: 768px) {
+            .mobile-stack {
+                flex-direction: column;
+            }
+            
+            .mobile-full-width {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- Navigation -->
+    <nav class="sticky top-0 z-50 py-4 px-6 sm:px-8 bg-white border-b border-gray-100">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center">
+                    <i class="fab fa-youtube text-white text-lg"></i>
+                </div>
+                <h1 class="text-xl font-semibold text-gray-900">Piped Piper</h1>
+            </div>
+            <div class="flex space-x-4">
+                <a href="javascript:history.back()" 
+                   class="btn btn-secondary">
+                    <i class="fas fa-arrow-left mr-2"></i>Back
+                </a>
+                <a th:href="@{/}" 
+                   class="btn btn-secondary">
+                    <i class="fas fa-home mr-2"></i>Home
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto py-8 px-6 sm:px-8">
+        <!-- Header Section -->
+        <div class="text-center mb-12">
+            <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">Video Analytics Dashboard</h1>
+            <p class="text-gray-600">Detailed statistics for <span class="font-medium" th:text="${title}"></span></p>
+        </div>
+
+        <!-- Video Information Card -->
+        <div class="card p-6 mb-8">
+            <div class="flex flex-col md:flex-row gap-6 items-center">
+                <div class="w-full md:w-1/2">
+                    <img th:src="${thumbnailUrl}" alt="Video Thumbnail" 
+                         class="w-full rounded-lg shadow-sm border border-gray-200">
+                </div>
+                <div class="w-full md:w-1/2 space-y-4">
+                    <div class="flex items-start space-x-4">
+                        <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-play text-indigo-600 text-xl"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-900 mb-1" th:text="${title}"></h2>
+                            <p class="text-gray-600" th:text="${'Published on ' + #temporals.format(#temporals.parse(publishedAt), 'MMM dd, yyyy')}"></p>
+                        </div>
+                    </div>
+                    
+                    <a th:href="${youtubeUrl}" target="_blank" 
+                       class="btn btn-primary inline-flex">
+                        <i class="fab fa-youtube mr-2"></i>Watch on YouTube
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Section -->
+        <div class="mb-8">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">Key Metrics</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <!-- Views -->
+                <div class="stat-card p-6">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-eye text-blue-600"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-gray-600 mb-1">Views</h3>
+                            <p class="text-2xl font-bold" th:text="${#numbers.formatDecimal(viewCount, 0, 'COMMA', 0, 'POINT')}"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Likes -->
+                <div class="stat-card p-6">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-thumbs-up text-green-600"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-gray-600 mb-1">Likes</h3>
+                            <p class="text-2xl font-bold" th:text="${#numbers.formatDecimal(likeCount, 0, 'COMMA', 0, 'POINT')}"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Comments -->
+                <div class="stat-card p-6">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-comments text-purple-600"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-gray-600 mb-1">Comments</h3>
+                            <p class="text-2xl font-bold" th:text="${#numbers.formatDecimal(commentCount, 0, 'COMMA', 0, 'POINT')}"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Channel Information -->
+        <div class="card p-6 mb-8">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">Channel Information</h2>
+            <div class="flex flex-col md:flex-row gap-6 items-center">
+                <div class="text-center">
+                    <img th:src="${channelThumbnail}" alt="Channel Avatar" 
+                         class="w-24 h-24 rounded-full mx-auto mb-4 border-2 border-indigo-200">
+                    <h3 class="text-xl font-bold text-gray-900 mb-2" th:text="${channelTitle}"></h3>
+                    <a th:href="'https://www.youtube.com/channel/' + ${channelId}" target="_blank"
+                       class="btn btn-secondary inline-flex">
+                        <i class="fas fa-external-link-alt mr-2"></i>Visit Channel
+                    </a>
+                </div>
+                
+                <div class="flex-1 space-y-4">
+                    <!-- Subscriber Count -->
+                    <div class="flex items-center space-x-4">
+                        <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-users text-indigo-600"></i>
+                        </div>
+                        <div>
+                            <p class="font-medium" th:text="${#numbers.formatDecimal(subscriberCount, 0, 'COMMA', 0, 'POINT') + ' Subscribers'}"></p>
+                            <p class="text-gray-600 text-sm">Channel subscribers</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Total Videos -->
+                    <div class="flex items-center space-x-4">
+                        <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-video text-indigo-600"></i>
+                        </div>
+                        <div>
+                            <p class="font-medium" th:text="${#numbers.formatDecimal(videoCount, 0, 'COMMA', 0, 'POINT') + ' Videos'}"></p>
+                            <p class="text-gray-600 text-sm">Total videos on channel</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Channel Description -->
+                    <div>
+                        <h4 class="font-medium text-gray-900 mb-2">About This Channel</h4>
+                        <p class="text-gray-600" th:text="${channelDescription}"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Video Description -->
+        <div class="card p-6 mb-8">
+            <div class="flex items-start space-x-4">
+                <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-align-left text-indigo-600 text-xl"></i>
+                </div>
+                <div class="flex-1">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-4">Video Description</h2>
+                    <div class="bg-gray-50 rounded-lg p-4 max-h-60 overflow-y-auto">
+                        <p class="text-gray-600 whitespace-pre-line" th:text="${description}"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <a th:href="@{/}" 
+               class="card p-6 text-center hover:border-indigo-200 transition-colors">
+                <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-search text-indigo-600 text-xl"></i>
+                </div>
+                <h3 class="text-lg font-bold text-gray-900 mb-1">New Search</h3>
+                <p class="text-gray-600">Analyze another video</p>
+            </a>
+            
+            <a th:href="${youtubeUrl}" target="_blank" 
+               class="card p-6 text-center hover:border-indigo-200 transition-colors">
+                <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                    <i class="fab fa-youtube text-indigo-600 text-xl"></i>
+                </div>
+                <h3 class="text-lg font-bold text-gray-900 mb-1">Watch Video</h3>
+                <p class="text-gray-600">Open on YouTube</p>
+            </a>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="py-8 px-6 sm:px-8 border-t border-gray-200 mt-12">
+        <div class="max-w-7xl mx-auto">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="flex items-center space-x-3 mb-4 md:mb-0">
+                    <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
+                        <i class="fab fa-youtube text-white text-sm"></i>
+                    </div>
+                    <span class="text-gray-900 font-medium">Piped Piper</span>
+                </div>
+                <div class="flex space-x-6">
+                    <a href="#" class="text-gray-500 hover:text-gray-700">Terms</a>
+                    <a href="#" class="text-gray-500 hover:text-gray-700">Privacy</a>
+                    <a href="#" class="text-gray-500 hover:text-gray-700">Contact</a>
+                </div>
+            </div>
+            <div class="mt-6 text-center md:text-left text-sm text-gray-500">
+                &copy; 2025 Piped Piper. All rights reserved.
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

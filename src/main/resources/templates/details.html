@@ -7,78 +7,154 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        .analytics-card {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: all 0.3s ease;
+        /* Base styles */
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
         }
         
-        .floating {
-            animation: float 6s ease-in-out infinite;
-        }
-
-        @keyframes float {
-            0% { transform: translateY(0px); }
-            50% { transform: translateY(-20px); }
-            100% { transform: translateY(0px); }
-        }
-
-        .tag-chip {
-            background: linear-gradient(45deg, rgba(239, 68, 68, 0.2), rgba(239, 68, 68, 0.3));
-            backdrop-filter: blur(5px);
-            transition: all 0.3s ease;
+        /* Card styles */
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
         
-        .tag-chip:hover {
+        .card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(239, 68, 68, 0.2);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
         }
         
-        .copy-btn {
-            transition: all 0.3s ease;
+        /* Button styles */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: all 0.2s ease;
         }
         
-        .copy-btn:hover {
-            transform: scale(1.1);
+        .btn-primary {
+            background-color: #4f46e5;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #4338ca;
+        }
+        
+        .btn-secondary {
+            background-color: white;
+            color: #4f46e5;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #f8fafc;
+            border-color: #c7d2fe;
+        }
+        
+        /* Navbar */
+        .navbar {
+            backdrop-filter: blur(8px);
+            background-color: rgba(255, 255, 255, 0.8);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .mobile-stack {
+                flex-direction: column;
+            }
+            
+            .mobile-full-width {
+                width: 100%;
+            }
+            
+            .mobile-text-center {
+                text-align: center;
+            }
+            
+            .mobile-px-4 {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background-color: #c7d2fe;
+            border-radius: 3px;
+        }
+        
+        /* Animation */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .animate-fade-in {
+            animation: fadeIn 0.3s ease-out forwards;
         }
     </style>
 </head>
-<body class="font-sans bg-gradient-to-br from-gray-900 via-purple-900 to-red-900 min-h-screen text-gray-100">
+<body class="min-h-screen">
+    <!-- Navigation -->
+    <nav class="navbar sticky top-0 z-50 py-4 px-6 sm:px-8">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center">
+                    <i class="fab fa-youtube text-white text-lg"></i>
+                </div>
+                <h1 class="text-xl font-semibold text-gray-900">Piped Piper</h1>
+            </div>
+            <!-- <div class="hidden md:flex space-x-4">
+                <a href="#" class="px-4 py-2 text-gray-600 hover:text-indigo-600 transition-colors">Features</a>
+                <a href="#" class="px-4 py-2 text-gray-600 hover:text-indigo-600 transition-colors">Pricing</a>
+                <a href="#" class="px-4 py-2 text-gray-600 hover:text-indigo-600 transition-colors">Docs</a>
+            </div> -->
+            <div class="flex items-center space-x-4">
+                <a th:href="@{/}" class="btn btn-secondary">
+                    <i class="fas fa-home mr-2"></i>
+                    <span class="hidden sm:inline">Home</span>
+                </a>
+            </div>
+        </div>
+    </nav>
 
-    <!-- Floating Elements -->
-    <div class="fixed inset-0 pointer-events-none z-0">
-        <div class="absolute top-1/4 left-1/4 w-48 h-48 bg-red-500/10 rounded-full filter blur-3xl"></div>
-        <div class="absolute bottom-1/3 right-1/4 w-64 h-64 bg-pink-500/10 rounded-full filter blur-3xl"></div>
-    </div>
-
-    <div th:if="${videoDetails}" class="max-w-4xl mx-auto py-12 px-6 relative z-10">
-        <!-- Header Section -->
-        <div class="text-center mb-12 space-y-4 floating">
-            <h1 class="text-4xl font-bold bg-gradient-to-r from-red-500 to-pink-500 bg-clip-text text-transparent">
-                Video Insights
-            </h1>
-            <a th:href="@{/}" class="inline-flex items-center px-6 py-2 bg-red-500 hover:bg-red-600 rounded-full transition-all">
-                <i class="fas fa-search mr-2"></i>New Search
-            </a>
+    <!-- Main Content -->
+    <main class="max-w-4xl mx-auto py-8 px-6 sm:px-8">
+        <!-- Header -->
+        <div class="mb-8 text-center">
+            <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">Video Insights</h1>
+            <p class="text-lg text-gray-600 max-w-2xl mx-auto">Detailed analytics and metadata for your YouTube videos</p>
         </div>
 
-        <!-- Title Card -->
-        <div class="analytics-card rounded-2xl p-6 mb-8 hover:scale-[1.02]">
+        <!-- Video Title Card -->
+        <div class="card p-6 mb-6 animate-fade-in" style="animation-delay: 0.1s;">
             <div class="flex items-start space-x-4">
-                <div class="w-12 h-12 bg-red-500/20 rounded-xl flex items-center justify-center">
-                    <i class="fas fa-play text-red-500 text-xl"></i>
+                <div class="w-12 h-12 bg-indigo-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-heading text-indigo-600 text-xl"></i>
                 </div>
                 <div class="flex-1">
                     <div class="flex justify-between items-start">
-                        <h2 class="text-xl font-bold mb-2">Video Title</h2>
+                        <h2 class="text-xl font-semibold text-gray-900 mb-2">Video Title</h2>
                         <button onclick="copyText('title','titleCopied')" 
-                                class="copy-btn text-red-500 hover:text-red-400">
+                                class="text-indigo-600 hover:text-indigo-800 transition-colors">
                             <i class="far fa-copy"></i>
                         </button>
                     </div>
-                    <p id="title" th:text="${title}" class="text-gray-300"></p>
-                    <span id="titleCopied" class="text-sm text-green-400 hidden ml-2">
+                    <p id="title" th:text="${title}" class="text-gray-700"></p>
+                    <span id="titleCopied" class="text-sm text-green-600 hidden mt-1 inline-flex items-center">
                         <i class="fas fa-check-circle mr-1"></i>Copied!
                     </span>
                 </div>
@@ -86,49 +162,51 @@
         </div>
 
         <!-- Thumbnail Card -->
-        <div class="analytics-card rounded-2xl p-6 mb-8 hover:scale-[1.02]">
+        <div class="card p-6 mb-6 animate-fade-in" style="animation-delay: 0.2s;">
             <div class="flex items-start space-x-4">
-                <div class="w-12 h-12 bg-pink-500/20 rounded-xl flex items-center justify-center">
-                    <i class="fas fa-camera text-pink-500 text-xl"></i>
+                <div class="w-12 h-12 bg-indigo-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-image text-indigo-600 text-xl"></i>
                 </div>
                 <div class="flex-1">
                     <div class="flex justify-between items-start">
-                        <h2 class="text-xl font-bold mb-2">Thumbnail</h2>
+                        <h2 class="text-xl font-semibold text-gray-900 mb-2">Thumbnail</h2>
                         <button onclick="copyText('thumbnail','thumbnailCopied', true)" 
-                                class="copy-btn text-pink-500 hover:text-pink-400">
+                                class="text-indigo-600 hover:text-indigo-800 transition-colors">
                             <i class="far fa-copy"></i>
                         </button>
                     </div>
-                    <img id="thumbnail" th:src="${thumbnailUrl}" 
-                         class="rounded-xl border-2 border-gray-700 hover:border-red-500 transition-all w-full max-w-md">
-                    <span id="thumbnailCopied" class="text-sm text-green-400 hidden ml-2">
-                        <i class="fas fa-check-circle mr-1"></i>Copied!
-                    </span>
+                    <div class="mt-3">
+                        <img id="thumbnail" th:src="${thumbnailUrl}" 
+                             class="rounded-lg border border-gray-200 w-full max-w-md">
+                        <span id="thumbnailCopied" class="text-sm text-green-600 hidden mt-1 inline-flex items-center">
+                            <i class="fas fa-check-circle mr-1"></i>Copied!
+                        </span>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- Tags Card -->
-        <div class="analytics-card rounded-2xl p-6 mb-8 hover:scale-[1.02]">
+        <div class="card p-6 mb-6 animate-fade-in" style="animation-delay: 0.3s;">
             <div class="flex items-start space-x-4">
-                <div class="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center">
-                    <i class="fas fa-hashtag text-purple-500 text-xl"></i>
+                <div class="w-12 h-12 bg-indigo-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-tags text-indigo-600 text-xl"></i>
                 </div>
                 <div class="flex-1">
                     <div class="flex justify-between items-start">
-                        <h2 class="text-xl font-bold mb-2">Video Tags</h2>
+                        <h2 class="text-xl font-semibold text-gray-900 mb-2">Video Tags</h2>
                         <button onclick="copyText('tags','tagsCopied')" 
-                                class="copy-btn text-purple-500 hover:text-purple-400">
+                                class="text-indigo-600 hover:text-indigo-800 transition-colors">
                             <i class="far fa-copy"></i>
                         </button>
                     </div>
                     <div class="flex flex-wrap gap-2 mt-3">
                         <div th:each="tag : ${tags}" 
-                             class="tag-chip px-3 py-1 rounded-full text-sm font-medium text-white">
+                             class="px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-sm font-medium">
                             <span th:text="${tag}"></span>
                         </div>
                     </div>
-                    <span id="tagsCopied" class="text-sm text-green-400 hidden ml-2">
+                    <span id="tagsCopied" class="text-sm text-green-600 hidden mt-1 inline-flex items-center">
                         <i class="fas fa-check-circle mr-1"></i>Copied!
                     </span>
                 </div>
@@ -136,27 +214,63 @@
         </div>
 
         <!-- Description Card -->
-        <div class="analytics-card rounded-2xl p-6 hover:scale-[1.02]">
+        <div class="card p-6 animate-fade-in" style="animation-delay: 0.4s;">
             <div class="flex items-start space-x-4">
-                <div class="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center">
-                    <i class="fas fa-file-alt text-blue-500 text-xl"></i>
+                <div class="w-12 h-12 bg-indigo-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-align-left text-indigo-600 text-xl"></i>
                 </div>
                 <div class="flex-1">
                     <div class="flex justify-between items-start">
-                        <h2 class="text-xl font-bold mb-2">Description</h2>
+                        <h2 class="text-xl font-semibold text-gray-900 mb-2">Description</h2>
                         <button onclick="copyText('description','descriptionCopied')" 
-                                class="copy-btn text-blue-500 hover:text-blue-400">
+                                class="text-indigo-600 hover:text-indigo-800 transition-colors">
                             <i class="far fa-copy"></i>
                         </button>
                     </div>
-                    <p id="description" th:text="${description}" class="text-gray-300 whitespace-pre-line"></p>
-                    <span id="descriptionCopied" class="text-sm text-green-400 hidden ml-2">
+                    <div class="mt-3 bg-gray-50 rounded-lg p-4 max-h-60 overflow-y-auto">
+                        <p id="description" th:text="${description}" class="text-gray-700 whitespace-pre-line"></p>
+                    </div>
+                    <span id="descriptionCopied" class="text-sm text-green-600 hidden mt-1 inline-flex items-center">
                         <i class="fas fa-check-circle mr-1"></i>Copied!
                     </span>
                 </div>
             </div>
         </div>
-    </div>
+
+        <!-- Action Buttons -->
+        <div class="mt-8 flex flex-col sm:flex-row justify-center gap-4">
+            <a th:href="@{/}" class="btn btn-primary">
+                <i class="fas fa-search mr-2"></i>
+                New Search
+            </a>
+            <!-- <a href="#" class="btn btn-secondary">
+                <i class="fas fa-download mr-2"></i>
+                Export Data
+            </a> -->
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="py-8 px-6 sm:px-8 border-t border-gray-100 mt-12">
+        <div class="max-w-7xl mx-auto">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="flex items-center space-x-3 mb-4 md:mb-0">
+                    <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
+                        <i class="fab fa-youtube text-white text-sm"></i>
+                    </div>
+                    <span class="text-gray-900 font-medium">Piped Piper</span>
+                </div>
+                <div class="flex space-x-6">
+                    <a href="#" class="text-gray-500 hover:text-gray-700">Terms</a>
+                    <a href="#" class="text-gray-500 hover:text-gray-700">Privacy</a>
+                    <a href="#" class="text-gray-500 hover:text-gray-700">Contact</a>
+                </div>
+            </div>
+            <div class="mt-6 text-center md:text-left text-sm text-gray-500">
+                &copy; 2025 Piped Piper. All rights reserved.
+            </div>
+        </div>
+    </footer>
 
     <script>
         function copyText(elementId, copiedId, isImg = false) {
