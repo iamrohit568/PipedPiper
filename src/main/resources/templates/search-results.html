@@ -86,13 +86,30 @@
             </div>
         </div>
 
-        <!-- New Search Button -->
-        <div class="mt-12 text-center">
-            <a th:href="@{/}" 
-               class="btn btn-secondary inline-flex">
-                <i class="fas fa-search mr-2"></i>New Search
-            </a>
-        </div>
+        <!-- Add this after the video grid -->
+<div th:if="${nextPageToken}" class="mt-8 text-center">
+    <form th:action="@{/search}" method="get" class="inline-flex">
+        <input type="hidden" name="keywords" th:value="${keywords}">
+        <input type="hidden" name="maxResults" th:value="${maxResults}">
+        <input type="hidden" name="sortBy" th:value="${sortBy}">
+        <input type="hidden" name="pageToken" th:value="${nextPageToken}">
+        <button type="submit" class="btn btn-primary">
+            <i class="fas fa-plus-circle mr-2"></i>Load More Videos
+        </button>
+    </form>
+</div>
+
+        <!-- Update the New Search Button section -->
+<div class="mt-12 text-center space-x-4">
+    <a th:href="@{/}" 
+       class="btn btn-secondary inline-flex">
+        <i class="fas fa-search mr-2"></i>New Search
+    </a>
+    <a th:href="@{'/search?keywords=' + ${keywords} + '&maxResults=' + ${maxResults} + '&sortBy=' + ${sortBy}}" 
+       class="btn btn-secondary inline-flex" th:if="${nextPageToken}">
+        <i class="fas fa-sync-alt mr-2"></i>Refresh Results
+    </a>
+</div>
     </main>
 
     <!-- Footer -->

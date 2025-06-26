@@ -131,20 +131,25 @@ public class ytservice {
         return objectMapper.readTree(response).path("items").get(0);
     }
 
-    public JsonNode searchVideos(String keywords, int maxResults, String sortBy) throws Exception {
-        String url = String.format("%s?part=snippet&q=%s&maxResults=%d&type=video&order=%s&key=%s",
-                youtubeConfig.getSearchApiUrl(),
-                URLEncoder.encode(keywords, StandardCharsets.UTF_8),
-                maxResults,
-                sortBy,
-                youtubeConfig.getApiKey());
-
-        RestTemplate restTemplate = new RestTemplate();
-        String response = restTemplate.getForObject(url, String.class);
-
-        ObjectMapper objectMapper = new ObjectMapper();
-        return objectMapper.readTree(response);
+    public JsonNode searchVideos(String keywords, int maxResults, String sortBy, String pageToken) throws Exception {
+    StringBuilder urlBuilder = new StringBuilder();
+    urlBuilder.append(String.format("%s?part=snippet&q=%s&maxResults=%d&type=video&order=%s&key=%s",
+            youtubeConfig.getSearchApiUrl(),
+            URLEncoder.encode(keywords, StandardCharsets.UTF_8),
+            maxResults,
+            sortBy,
+            youtubeConfig.getApiKey()));
+    
+    if (pageToken != null && !pageToken.isEmpty()) {
+        urlBuilder.append("&pageToken=").append(pageToken);
     }
+
+    RestTemplate restTemplate = new RestTemplate();
+    String response = restTemplate.getForObject(urlBuilder.toString(), String.class);
+
+    ObjectMapper objectMapper = new ObjectMapper();
+    return objectMapper.readTree(response);
+}
 
     public List<JsonNode> getVideoDetailsBatch(List<String> videoIds) throws Exception {
         String joinedIds = String.join(",", videoIds);
