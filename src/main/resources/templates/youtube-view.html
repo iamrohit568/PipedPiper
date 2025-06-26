@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subscriptions | Piped Piper</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .video-thumbnail {
+            aspect-ratio: 16 / 9;
+        }
+        .channel-card:hover {
+            transform: translateY(-4px);
+        }
+        .sidebar {
+            scrollbar-width: thin;
+            scrollbar-color: #c7d2fe transparent;
+        }
+        .sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .sidebar::-webkit-scrollbar-thumb {
+            background-color: #c7d2fe;
+            border-radius: 3px;
+        }
+        .video-card:hover .video-title {
+            color: #4f46e5;
+        }
+        .video-duration {
+            background-color: rgba(0, 0, 0, 0.8);
+        }
+        .channel-avatar {
+            transition: transform 0.2s ease;
+        }
+        .channel-card:hover .channel-avatar {
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 flex items-center">
+                        <div class="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center">
+                            <i class="fab fa-youtube text-white text-lg"></i>
+                        </div>
+                        <h1 class="ml-3 text-xl font-semibold text-gray-900">Piped Piper</h1>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="relative hidden md:block">
+                        <input type="text" placeholder="Search" 
+                               class="w-64 px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <button class="absolute right-3 top-2 text-gray-500">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                    <a th:href="@{/}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left mr-2"></i> Back to Analyzer
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="flex">
+        <!-- Sidebar -->
+        <div class="hidden md:block w-64 bg-white h-screen sticky top-16 overflow-y-auto sidebar border-r border-gray-200">
+            <div class="p-4">
+                <h3 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
+                    <i class="fas fa-bell mr-2 text-indigo-600"></i> Subscriptions
+                </h3>
+                <div class="space-y-2">
+                    <div th:each="channel : ${subscribedChannels}" class="channel-card flex items-center p-2 rounded-lg hover:bg-gray-100 cursor-pointer transition-all duration-200">
+                        <img th:src="${channel.thumbnail}" class="channel-avatar w-8 h-8 rounded-full mr-3">
+                        <span th:text="${channel.name}" class="text-gray-700 font-medium"></span>
+                    </div>
+                </div>
+                
+                <div class="mt-6 pt-4 border-t border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
+                        <i class="fas fa-fire mr-2 text-red-500"></i> Trending
+                    </h3>
+                    <div class="space-y-2">
+                        <a href="#" class="flex items-center p-2 rounded-lg hover:bg-gray-100">
+                            <span class="text-gray-700">#TechReviews</span>
+                        </a>
+                        <a href="#" class="flex items-center p-2 rounded-lg hover:bg-gray-100">
+                            <span class="text-gray-700">#Tutorials</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 p-6">
+            <div class="max-w-7xl mx-auto">
+                <!-- Channel Header -->
+                <div class="mb-8 flex items-center">
+                    <div class="relative">
+                        <img th:src="${userChannel.thumbnail}" class="w-16 h-16 rounded-full mr-4 border-2 border-indigo-500">
+                        <span class="absolute bottom-0 right-4 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></span>
+                    </div>
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900" th:text="${userChannel.name}"></h2>
+                        <p class="text-gray-600">Your subscribed content</p>
+                    </div>
+                </div>
+
+                <!-- Filter Bar -->
+                <div class="mb-6 flex overflow-x-auto pb-2 scrollbar-hide">
+                    <button class="px-4 py-2 bg-indigo-600 text-white rounded-full mr-2 whitespace-nowrap">
+                        All Videos
+                    </button>
+                    <button class="px-4 py-2 bg-gray-200 rounded-full mr-2 whitespace-nowrap hover:bg-gray-300">
+                        Today
+                    </button>
+                    <button class="px-4 py-2 bg-gray-200 rounded-full mr-2 whitespace-nowrap hover:bg-gray-300">
+                        This Week
+                    </button>
+                    <button class="px-4 py-2 bg-gray-200 rounded-full mr-2 whitespace-nowrap hover:bg-gray-300">
+                        Watched
+                    </button>
+                    <button class="px-4 py-2 bg-gray-200 rounded-full mr-2 whitespace-nowrap hover:bg-gray-300">
+                        New to you
+                    </button>
+                </div>
+
+                <!-- Video Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    <div th:each="video : ${videos}" class="video-card bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200">
+                        <!-- Thumbnail -->
+                        <div class="video-thumbnail bg-gray-200 relative">
+                            <img th:src="${video.thumbnailUrl}" alt="Video thumbnail" class="w-full h-full object-cover">
+                            <span class="video-duration absolute bottom-2 right-2 text-white text-xs px-1.5 py-0.5 rounded" 
+                                  th:text="${video.duration}"></span>
+                        </div>
+                        
+                        <div class="p-4">
+                            <!-- Channel Info -->
+                            <div class="flex items-start mt-2">
+                                <img th:src="${video.channelThumbnail}" class="w-8 h-8 rounded-full mr-3 mt-1">
+                                <div>
+                                    <h3 class="video-title font-medium text-gray-900 mb-1 line-clamp-2" th:text="${video.title}"></h3>
+                                    <p class="text-gray-600 text-sm">
+                                        <span th:text="${video.channelName}"></span> • 
+                                        <span th:text="${video.viewCount + ' views'}"></span> • 
+                                        <span th:text="${video.publishedAt}"></span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Loading more indicator -->
+                <div class="mt-8 text-center" id="loadMoreContainer">
+                    <button id="loadMoreBtn" class="btn btn-primary inline-flex items-center">
+                        <i class="fas fa-sync-alt mr-2"></i> Load More Videos
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t mt-12 py-8 px-6 sm:px-8">
+        <div class="max-w-7xl mx-auto">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="flex items-center space-x-3 mb-4 md:mb-0">
+                    <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
+                        <i class="fab fa-youtube text-white text-sm"></i>
+                    </div>
+                    <span class="text-gray-900 font-medium">Piped Piper</span>
+                </div>
+                <div class="flex space-x-6">
+                    <a href="#" class="text-gray-500 hover:text-gray-700">Terms</a>
+                    <a href="#" class="text-gray-500 hover:text-gray-700">Privacy</a>
+                    <a href="#" class="text-gray-500 hover:text-gray-700">Contact</a>
+                </div>
+            </div>
+            <div class="mt-6 text-center md:text-left text-sm text-gray-500">
+                &copy; 2025 Piped Piper. All rights reserved.
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Infinite scroll functionality
+        let isLoading = false;
+        let nextPageToken = '';
+        
+        document.getElementById('loadMoreBtn').addEventListener('click', loadMoreVideos);
+        
+        // Detect when user scrolls to bottom
+        window.addEventListener('scroll', () => {
+            if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 500 && !isLoading) {
+                loadMoreVideos();
+            }
+        });
+        
+        function loadMoreVideos() {
+            if (isLoading) return;
+            
+            isLoading = true;
+            document.getElementById('loadMoreBtn').innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Loading...';
+            
+            // Simulate API call (replace with actual fetch)
+            setTimeout(() => {
+                // This would be replaced with actual fetch to your backend
+                // fetch(`/api/subscribed-videos?pageToken=${nextPageToken}`)
+                //     .then(response => response.json())
+                //     .then(data => {
+                //         appendVideos(data.videos);
+                //         nextPageToken = data.nextPageToken;
+                //         isLoading = false;
+                //         document.getElementById('loadMoreBtn').innerHTML = '<i class="fas fa-sync-alt mr-2"></i> Load More Videos';
+                //     });
+                
+                // For demo purposes, we'll just add some mock videos
+                const videoGrid = document.querySelector('.grid');
+                for (let i = 0; i < 4; i++) {
+                    videoGrid.innerHTML += `
+                        <div class="video-card bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200">
+                            <div class="video-thumbnail bg-gray-200 relative">
+                                <img src="https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg" class="w-full h-full object-cover">
+                                <span class="video-duration absolute bottom-2 right-2 text-white text-xs px-1.5 py-0.5 rounded">10:30</span>
+                            </div>
+                            <div class="p-4">
+                                <div class="flex items-start mt-2">
+                                    <img src="https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg" class="w-8 h-8 rounded-full mr-3 mt-1">
+                                    <div>
+                                        <h3 class="video-title font-medium text-gray-900 mb-1 line-clamp-2">New Video Title ${Math.floor(Math.random() * 100)}</h3>
+                                        <p class="text-gray-600 text-sm">Channel Name • ${Math.floor(Math.random() * 10)}K views • 1 day ago</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                isLoading = false;
+                document.getElementById('loadMoreBtn').innerHTML = '<i class="fas fa-sync-alt mr-2"></i> Load More Videos';
+            }, 1000);
+        }
+    </script>
+</body>
+</html>

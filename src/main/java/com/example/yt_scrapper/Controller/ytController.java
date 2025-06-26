@@ -77,6 +77,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.security.Principal;
 
 
 
@@ -332,6 +333,29 @@ public String generateDescription(@RequestParam String keywords, Model model) {
         model.addAttribute("generatedContent", description);
         model.addAttribute("generatorType", "Description");
         return "generated-content-display";
+    } catch (Exception e) {
+        e.printStackTrace();
+        return "error";
+    }
+}
+
+@GetMapping("/youtube-view")
+public String youtubeView(Model model, Principal principal) {
+    try {
+        // 1. Get authenticated user's YouTube subscriptions
+        List<Map<String, String>> subscribedChannels = youtubeservice.getUserSubscriptions(principal.getName());
+        
+        // 2. Get videos from subscribed channels
+        List<Map<String, String>> videos = youtubeservice.getSubscribedVideos(principal.getName());
+        
+        // 3. Get user's channel info
+        Map<String, String> userChannel = youtubeservice.getUserChannelInfo(principal.getName());
+        
+        model.addAttribute("subscribedChannels", subscribedChannels);
+        model.addAttribute("videos", videos);
+        model.addAttribute("userChannel", userChannel);
+        
+        return "youtube-view";
     } catch (Exception e) {
         e.printStackTrace();
         return "error";

@@ -59,6 +59,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -170,4 +171,77 @@ public class ytservice {
         }
         return results;
     }
+
+    // Add these methods to your ytservice class
+
+public List<Map<String, String>> getUserSubscriptions(String username) throws Exception {
+    // In a real implementation, you would:
+    // 1. Get the user's YouTube access token from your database
+    // 2. Call YouTube API to get subscriptions
+    // 3. Process and return the data
+    
+    // Mock data for demonstration
+    List<Map<String, String>> subscriptions = new ArrayList<>();
+    
+    subscriptions.add(Map.of(
+        "id", "UC123456789",
+        "name", "Tech Reviews",
+        "thumbnail", "https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg"
+    ));
+    
+    subscriptions.add(Map.of(
+        "id", "UC987654321",
+        "name", "Cooking Channel",
+        "thumbnail", "https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg"
+    ));
+    
+    return subscriptions;
+}
+
+public List<Map<String, String>> getSubscribedVideos(String username) throws Exception {
+    // In a real implementation, you would:
+    // 1. Get the user's subscriptions
+    // 2. Fetch videos from those channels
+    // 3. Process and return the data
+    
+    // Mock data for demonstration
+    List<Map<String, String>> videos = new ArrayList<>();
+    
+    videos.add(Map.of(
+        "id", "video1",
+        "title", "The Ultimate Tech Review 2025",
+        "thumbnailUrl", "https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
+        "duration", "12:34",
+        "viewCount", "1.2M",
+        "publishedAt", "2 days ago",
+        "channelName", "Tech Reviews",
+        "channelThumbnail", "https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg"
+    ));
+    
+    videos.add(Map.of(
+        "id", "video2",
+        "title", "How to Cook Perfect Pasta",
+        "thumbnailUrl", "https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
+        "duration", "8:45",
+        "viewCount", "456K",
+        "publishedAt", "1 week ago",
+        "channelName", "Cooking Channel",
+        "channelThumbnail", "https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg"
+    ));
+    
+    return videos;
+}
+
+public Map<String, String> getUserChannelInfo(String username) throws Exception {
+    // In a real implementation, you would:
+    // 1. Get the user's YouTube channel info
+    // 2. Process and return the data
+    
+    // Mock data for demonstration
+    return Map.of(
+        "name", username + "'s Channel",
+        "thumbnail", "https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
+        "subscriberCount", "10K"
+    );
+}
 }
