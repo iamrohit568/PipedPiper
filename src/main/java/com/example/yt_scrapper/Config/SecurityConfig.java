@@ -23,9 +23,17 @@ public class SecurityConfig {
                     "/generate-title",
                     "/generate-tags",
                     "/generate-description",
+                    "/watch-together/**",
+                    "/api/watch-together/**",
+                    "/api/videos/**",
+                    "/api/search/**",
+                    "/api/history/**",
+                    "/ws-watch-together/**",
                     "/css/**",
                     "/js/**",
-                    "/images/**"
+                    "/images/**",
+                    "/lib/**",
+                    "/static/**"
                 ).permitAll()
                 .anyRequest().authenticated()
             )
@@ -37,6 +45,9 @@ public class SecurityConfig {
             .logout(logout -> logout
                 .logoutSuccessUrl("/login?logout")
                 .permitAll()
+            )
+            .csrf(csrf -> csrf
+                .ignoringRequestMatchers("/ws-watch-together/**", "/api/history/**")
             );
         return http.build();
     }

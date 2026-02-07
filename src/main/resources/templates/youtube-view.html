@@ -52,14 +52,17 @@
                     </div>
                 </div>
                 <div class="flex items-center space-x-4">
-                    <div class="relative hidden md:block">
-                        <input type="text" placeholder="Search" 
+                    <form id="searchForm" class="relative hidden md:block" onsubmit="return handleSearch(event)">
+                        <input type="text" id="searchInput" placeholder="Search" 
                                class="w-64 px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                        <button class="absolute right-3 top-2 text-gray-500">
+                        <button type="submit" class="absolute right-3 top-2 text-gray-500 hover:text-indigo-600">
                             <i class="fas fa-search"></i>
                         </button>
-                    </div>
-                    <a th:href="@{/}" class="btn btn-secondary">
+                    </form>
+                    <button id="clearSearchBtn" onclick="clearSearch()" class="hidden px-3 py-2 bg-red-100 text-red-600 rounded-full hover:bg-red-200 transition-all duration-200 flex items-center text-sm">
+                        <i class="fas fa-times mr-1"></i> Clear
+                    </button>
+                    <a th:href="@{/}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-full hover:bg-gray-300 transition-all duration-200 flex items-center">
                         <i class="fas fa-arrow-left mr-2"></i> Back to Analyzer
                     </a>
                 </div>
@@ -71,28 +74,44 @@
         <!-- Sidebar -->
         <div class="hidden md:block w-64 bg-white h-screen sticky top-16 overflow-y-auto sidebar border-r border-gray-200">
             <div class="p-4">
-                <h3 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
-                    <i class="fas fa-bell mr-2 text-indigo-600"></i> Subscriptions
-                </h3>
-                <div class="space-y-2">
-                    <div th:each="channel : ${subscribedChannels}" class="channel-card flex items-center p-2 rounded-lg hover:bg-gray-100 cursor-pointer transition-all duration-200">
-                        <img th:src="${channel.thumbnail}" class="channel-avatar w-8 h-8 rounded-full mr-3">
-                        <span th:text="${channel.name}" class="text-gray-700 font-medium"></span>
-                    </div>
+                <!-- Home -->
+                <a href="/youtube-view" class="flex items-center p-3 rounded-lg bg-gray-100 mb-2">
+                    <i class="fas fa-home mr-3 text-gray-700"></i>
+                    <span class="text-gray-900 font-medium">Home</span>
+                </a>
+                
+                <!-- Videos & Shorts Tabs -->
+                <div class="mb-4">
+                    <button onclick="setContentType('videos')" id="videosTab" class="flex items-center w-full p-3 rounded-lg hover:bg-gray-100 mb-1 bg-indigo-50 text-indigo-600">
+                        <i class="fas fa-play mr-3"></i>
+                        <span class="font-medium">Videos</span>
+                    </button>
+                    <button onclick="setContentType('shorts')" id="shortsTab" class="flex items-center w-full p-3 rounded-lg hover:bg-gray-100 text-gray-700">
+                        <i class="fas fa-bolt mr-3"></i>
+                        <span class="font-medium">Shorts</span>
+                    </button>
                 </div>
                 
-                <div class="mt-6 pt-4 border-t border-gray-200">
+                <div class="border-t border-gray-200 pt-4 mb-4">
+                    <a href="#" class="flex items-center p-3 rounded-lg hover:bg-gray-100 mb-1">
+                        <i class="fas fa-clock mr-3 text-gray-600"></i>
+                        <span class="text-gray-700">History</span>
+                    </a>
+                    <a href="#" class="flex items-center p-3 rounded-lg hover:bg-gray-100 mb-1">
+                        <i class="fas fa-thumbs-up mr-3 text-gray-600"></i>
+                        <span class="text-gray-700">Liked Videos</span>
+                    </a>
+                </div>
+                
+                <!-- Watch Together Section -->
+                <div class="pt-4 border-t border-gray-200">
                     <h3 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
-                        <i class="fas fa-fire mr-2 text-red-500"></i> Trending
+                        <i class="fas fa-users mr-2 text-purple-600"></i> Watch Together
                     </h3>
-                    <div class="space-y-2">
-                        <a href="#" class="flex items-center p-2 rounded-lg hover:bg-gray-100">
-                            <span class="text-gray-700">#TechReviews</span>
-                        </a>
-                        <a href="#" class="flex items-center p-2 rounded-lg hover:bg-gray-100">
-                            <span class="text-gray-700">#Tutorials</span>
-                        </a>
-                    </div>
+                    <p class="text-gray-500 text-sm mb-3">Watch videos with friends in real-time!</p>
+                    <a th:href="@{/watch-together}" class="flex items-center justify-center w-full px-4 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all duration-200 shadow-md">
+                        <i class="fas fa-play-circle mr-2"></i> Start a Room
+                    </a>
                 </div>
             </div>
         </div>
@@ -101,50 +120,65 @@
         <div class="flex-1 p-6">
             <div class="max-w-7xl mx-auto">
                 <!-- Channel Header -->
-                <div class="mb-8 flex items-center">
-                    <div class="relative">
-                        <img th:src="${userChannel.thumbnail}" class="w-16 h-16 rounded-full mr-4 border-2 border-indigo-500">
-                        <span class="absolute bottom-0 right-4 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></span>
+                <div class="mb-8 flex items-center justify-between">
+                    <div class="flex items-center">
+                        <div class="relative">
+                            <img th:src="${userChannel.thumbnail}" class="w-16 h-16 rounded-full mr-4 border-2 border-indigo-500">
+                            <span class="absolute bottom-0 right-4 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></span>
+                        </div>
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-900" th:text="${userChannel.name}"></h2>
+                            <p class="text-gray-600">Your subscribed content</p>
+                        </div>
                     </div>
-                    <div>
-                        <h2 class="text-2xl font-bold text-gray-900" th:text="${userChannel.name}"></h2>
-                        <p class="text-gray-600">Your subscribed content</p>
+                    <!-- Personalization indicator -->
+                    <div id="forYouIndicator" class="hidden items-center px-4 py-2 bg-gradient-to-r from-purple-100 to-indigo-100 rounded-full">
+                        <i class="fas fa-magic text-purple-600 mr-2"></i>
+                        <span class="text-sm font-medium text-purple-700">For You</span>
                     </div>
                 </div>
 
                 <!-- Filter Bar -->
-                <div class="mb-6 flex overflow-x-auto pb-2 scrollbar-hide">
-                    <button class="px-4 py-2 bg-indigo-600 text-white rounded-full mr-2 whitespace-nowrap">
+                <div class="mb-6 flex overflow-x-auto pb-2 scrollbar-hide" id="filterBar">
+                    <button onclick="filterVideos('all')" id="filterAll" class="filter-btn px-4 py-2 bg-indigo-600 text-white rounded-full mr-2 whitespace-nowrap">
                         All Videos
                     </button>
-                    <button class="px-4 py-2 bg-gray-200 rounded-full mr-2 whitespace-nowrap hover:bg-gray-300">
-                        Today
+                    <button onclick="filterVideos('music')" id="filterMusic" class="filter-btn px-4 py-2 bg-gray-200 rounded-full mr-2 whitespace-nowrap hover:bg-gray-300">
+                        Music
                     </button>
-                    <button class="px-4 py-2 bg-gray-200 rounded-full mr-2 whitespace-nowrap hover:bg-gray-300">
-                        This Week
+                    <button onclick="filterVideos('gaming')" id="filterGaming" class="filter-btn px-4 py-2 bg-gray-200 rounded-full mr-2 whitespace-nowrap hover:bg-gray-300">
+                        Gaming
                     </button>
-                    <button class="px-4 py-2 bg-gray-200 rounded-full mr-2 whitespace-nowrap hover:bg-gray-300">
-                        Watched
+                    <button onclick="filterVideos('news')" id="filterNews" class="filter-btn px-4 py-2 bg-gray-200 rounded-full mr-2 whitespace-nowrap hover:bg-gray-300">
+                        News
                     </button>
-                    <button class="px-4 py-2 bg-gray-200 rounded-full mr-2 whitespace-nowrap hover:bg-gray-300">
-                        New to you
+                    <button onclick="filterVideos('sports')" id="filterSports" class="filter-btn px-4 py-2 bg-gray-200 rounded-full mr-2 whitespace-nowrap hover:bg-gray-300">
+                        Sports
                     </button>
                 </div>
 
                 <!-- Video Grid -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    <div th:each="video : ${videos}" class="video-card bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200">
+                <div id="videoGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    <div th:each="video : ${videos}" class="video-card bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200 cursor-pointer"
+                         th:data-video-id="${video.videoId}"
+                         th:data-video-title="${video.title}"
+                         th:data-channel-title="${video.channelName}"
+                         th:data-thumbnail-url="${video.thumbnailUrl}">
                         <!-- Thumbnail -->
                         <div class="video-thumbnail bg-gray-200 relative">
                             <img th:src="${video.thumbnailUrl}" alt="Video thumbnail" class="w-full h-full object-cover">
                             <span class="video-duration absolute bottom-2 right-2 text-white text-xs px-1.5 py-0.5 rounded" 
                                   th:text="${video.duration}"></span>
+                            <!-- Play button overlay -->
+                            <div class="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity bg-black bg-opacity-30">
+                                <i class="fas fa-play-circle text-white text-5xl"></i>
+                            </div>
                         </div>
                         
                         <div class="p-4">
                             <!-- Channel Info -->
                             <div class="flex items-start mt-2">
-                                <img th:src="${video.channelThumbnail}" class="w-8 h-8 rounded-full mr-3 mt-1">
+                                <img th:src="${video.channelThumbnail}" class="w-8 h-8 rounded-full mr-3 mt-1" onerror="this.src='https://ui-avatars.com/api/?name=YT&background=random&size=64'">
                                 <div>
                                     <h3 class="video-title font-medium text-gray-900 mb-1 line-clamp-2" th:text="${video.title}"></h3>
                                     <p class="text-gray-600 text-sm">
@@ -164,6 +198,35 @@
                         <i class="fas fa-sync-alt mr-2"></i> Load More Videos
                     </button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Video Player Modal -->
+    <div id="videoModal" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-black bg-opacity-75" onclick="closeVideoPlayer()"></div>
+        <div class="absolute inset-4 md:inset-8 lg:inset-16 flex flex-col">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="modalVideoTitle" class="text-white text-xl font-semibold truncate mr-4"></h3>
+                <button onclick="closeVideoPlayer()" class="text-white hover:text-gray-300 text-2xl">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="flex-1 bg-black rounded-lg overflow-hidden">
+                <iframe id="youtubePlayer" 
+                        class="w-full h-full"
+                        frameborder="0" 
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                        allowfullscreen>
+                </iframe>
+            </div>
+            <div class="mt-4 flex justify-center space-x-4">
+                <a id="watchOnYoutubeBtn" href="#" target="_blank" class="bg-red-600 text-white px-6 py-2 rounded-full hover:bg-red-700 transition-colors">
+                    <i class="fab fa-youtube mr-2"></i> Watch on YouTube
+                </a>
+                <button id="watchTogetherBtn" onclick="startWatchTogether()" class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-6 py-2 rounded-full hover:from-purple-700 hover:to-indigo-700 transition-colors">
+                    <i class="fas fa-users mr-2"></i> Watch Together
+                </button>
             </div>
         </div>
     </div>
@@ -191,6 +254,20 @@
     </footer>
 
     <script>
+        // Video card click handler using event delegation
+        document.getElementById('videoGrid').addEventListener('click', function(e) {
+            const videoCard = e.target.closest('.video-card');
+            if (videoCard) {
+                const videoId = videoCard.dataset.videoId;
+                const videoTitle = videoCard.dataset.videoTitle;
+                const channelTitle = videoCard.dataset.channelTitle || '';
+                const thumbnailUrl = videoCard.dataset.thumbnailUrl || '';
+                if (videoId) {
+                    openVideoPlayer(videoId, videoTitle, channelTitle, thumbnailUrl);
+                }
+            }
+        });
+
         // Infinite scroll functionality
         let isLoading = false;
         let nextPageToken = '';
@@ -204,49 +281,784 @@
             }
         });
         
-        function loadMoreVideos() {
+        async function loadMoreVideos() {
             if (isLoading) return;
             
             isLoading = true;
             document.getElementById('loadMoreBtn').innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Loading...';
             
-            // Simulate API call (replace with actual fetch)
-            setTimeout(() => {
-                // This would be replaced with actual fetch to your backend
-                // fetch(`/api/subscribed-videos?pageToken=${nextPageToken}`)
-                //     .then(response => response.json())
-                //     .then(data => {
-                //         appendVideos(data.videos);
-                //         nextPageToken = data.nextPageToken;
-                //         isLoading = false;
-                //         document.getElementById('loadMoreBtn').innerHTML = '<i class="fas fa-sync-alt mr-2"></i> Load More Videos';
-                //     });
+            try {
+                let url = '/api/videos?regionCode=IN&maxResults=20';
+                if (nextPageToken) {
+                    url += `&pageToken=${nextPageToken}`;
+                }
                 
-                // For demo purposes, we'll just add some mock videos
-                const videoGrid = document.querySelector('.grid');
-                for (let i = 0; i < 4; i++) {
-                    videoGrid.innerHTML += `
-                        <div class="video-card bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200">
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (data.videos && data.videos.length > 0) {
+                    appendVideos(data.videos);
+                    nextPageToken = data.nextPageToken || '';
+                }
+                
+                // Hide load more button if no more pages
+                if (!data.nextPageToken) {
+                    document.getElementById('loadMoreBtn').style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Error loading more videos:', error);
+            } finally {
+                isLoading = false;
+                document.getElementById('loadMoreBtn').innerHTML = '<i class="fas fa-sync-alt mr-2"></i> Load More Videos';
+            }
+        }
+        
+        // Helper function to check if a video is a Short based on multiple criteria
+        function isShortVideo(video) {
+            const duration = video.duration || '';
+            const title = (video.title || '').toLowerCase();
+            const thumbnailUrl = video.thumbnailUrl || '';
+            
+            // Check if title contains "short" or "#shorts"
+            if (title.includes('#short') || title.includes('shorts')) {
+                return true;
+            }
+            
+            // Check thumbnail URL patterns that indicate Shorts
+            // YouTube Shorts often have specific URL patterns
+            if (thumbnailUrl.includes('/shorts/') || thumbnailUrl.includes('_shorts')) {
+                return true;
+            }
+            
+            // Parse duration (format: "1:23" or "0:45" or "1:23:45")
+            if (duration) {
+                const parts = duration.split(':').map(Number);
+                let totalSeconds = 0;
+                
+                if (parts.length === 2) {
+                    // MM:SS format
+                    totalSeconds = parts[0] * 60 + parts[1];
+                } else if (parts.length === 3) {
+                    // HH:MM:SS format
+                    totalSeconds = parts[0] * 3600 + parts[1] * 60 + parts[2];
+                } else if (parts.length === 1) {
+                    totalSeconds = parts[0];
+                }
+                
+                // Shorts are typically 60 seconds or less
+                return totalSeconds <= 60 && totalSeconds > 0;
+            }
+            
+            return false;
+        }
+        
+        // Async function to check aspect ratio of thumbnail image
+        // Returns a promise that resolves to true if vertical (9:16), false if horizontal (16:9)
+        function checkThumbnailAspectRatio(thumbnailUrl) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = function() {
+                    // Calculate aspect ratio
+                    const aspectRatio = this.naturalWidth / this.naturalHeight;
+                    // Vertical video (Shorts) has aspect ratio < 1 (9:16 = 0.5625)
+                    // Horizontal video has aspect ratio > 1 (16:9 = 1.778)
+                    // Consider it a Short if aspect ratio is less than 1 (portrait)
+                    resolve(aspectRatio < 1);
+                };
+                img.onerror = function() {
+                    resolve(false); // Default to not a short if image fails to load
+                };
+                img.src = thumbnailUrl;
+            });
+        }
+        
+        // Advanced filtering with aspect ratio check (async)
+        async function filterVideosByAspectRatio(videos, keepShorts = false) {
+            const filtered = [];
+            
+            for (const video of videos) {
+                const isShort = isShortVideo(video);
+                
+                // If not already determined as short by metadata, check aspect ratio
+                if (!isShort && video.thumbnailUrl) {
+                    const isVertical = await checkThumbnailAspectRatio(video.thumbnailUrl);
+                    if (isVertical) {
+                        // This is likely a Short based on aspect ratio
+                        if (keepShorts) {
+                            filtered.push(video);
+                        }
+                        continue;
+                    }
+                }
+                
+                if (keepShorts && isShort) {
+                    filtered.push(video);
+                } else if (!keepShorts && !isShort) {
+                    filtered.push(video);
+                }
+            }
+            
+            return filtered;
+        }
+        
+        function appendVideos(videos, forceIncludeAll = false) {
+            const videoGrid = document.getElementById('videoGrid');
+            
+            videos.forEach(video => {
+                // Skip shorts when viewing regular videos (unless forceIncludeAll is true)
+                if (!forceIncludeAll && currentContentType === 'videos' && isShortVideo(video)) {
+                    return;
+                }
+                
+                const videoCard = document.createElement('div');
+                videoCard.className = 'video-card bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200 cursor-pointer';
+                videoCard.dataset.videoId = video.videoId;
+                videoCard.dataset.videoTitle = video.title;
+                videoCard.dataset.channelTitle = video.channelTitle || '';
+                videoCard.dataset.thumbnailUrl = video.thumbnailUrl || '';
+                
+                videoCard.innerHTML = `
+                    <div class="video-thumbnail bg-gray-200 relative">
+                        <img src="${video.thumbnailUrl}" class="w-full h-full object-cover" loading="lazy" 
+                             onload="checkAndHideIfShort(this, '${video.videoId}')">
+                        <span class="video-duration absolute bottom-2 right-2 text-white text-xs px-1.5 py-0.5 rounded">${video.duration || ''}</span>
+                    </div>
+                    <div class="p-4">
+                        <div class="flex items-start mt-2">
+                            <img src="${video.channelThumbnail || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(video.channelTitle || 'C') + '&size=32'}" 
+                                 class="w-8 h-8 rounded-full mr-3 mt-1">
+                            <div>
+                                <h3 class="video-title font-medium text-gray-900 mb-1 line-clamp-2">${escapeHtml(video.title)}</h3>
+                                <p class="text-gray-600 text-sm">${escapeHtml(video.channelTitle || '')} • ${video.viewCount || ''} views • ${video.publishedAt || ''}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                videoGrid.appendChild(videoCard);
+            });
+        }
+        
+        // Check aspect ratio after image loads and hide if it's a short in videos mode
+        function checkAndHideIfShort(imgElement, videoId) {
+            if (currentContentType === 'videos') {
+                const aspectRatio = imgElement.naturalWidth / imgElement.naturalHeight;
+                // If vertical (aspect ratio < 0.8), it's likely a Short - hide it
+                if (aspectRatio < 0.8) {
+                    const card = imgElement.closest('.video-card');
+                    if (card) {
+                        card.style.display = 'none';
+                    }
+                }
+            }
+        }
+        
+        function appendShorts(videos) {
+            const videoGrid = document.getElementById('videoGrid');
+            
+            videos.forEach(video => {
+                // Only include shorts
+                if (!isShortVideo(video)) {
+                    return;
+                }
+                
+                const videoCard = document.createElement('div');
+                videoCard.className = 'video-card bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200 cursor-pointer';
+                videoCard.dataset.videoId = video.videoId;
+                videoCard.dataset.videoTitle = video.title;
+                
+                videoCard.innerHTML = `
+                    <div class="video-thumbnail bg-gray-200 relative">
+                        <img src="${video.thumbnailUrl}" class="w-full h-full object-cover" loading="lazy">
+                        <span class="absolute top-2 left-2 bg-red-600 text-white text-xs px-2 py-1 rounded">
+                            <i class="fas fa-bolt mr-1"></i>SHORT
+                        </span>
+                        <span class="video-duration absolute bottom-2 right-2 text-white text-xs px-1.5 py-0.5 rounded">${video.duration || ''}</span>
+                    </div>
+                    <div class="p-4">
+                        <div class="flex items-start mt-2">
+                            <img src="${video.channelThumbnail || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(video.channelTitle || 'C') + '&size=32'}" 
+                                 class="w-8 h-8 rounded-full mr-3 mt-1">
+                            <div>
+                                <h3 class="video-title font-medium text-gray-900 mb-1 line-clamp-2">${escapeHtml(video.title)}</h3>
+                                <p class="text-gray-600 text-sm">${escapeHtml(video.channelTitle || '')} • ${video.viewCount || ''} views</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                videoGrid.appendChild(videoCard);
+            });
+        }
+        
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Video Player Functions
+        let currentVideoId = null;
+        let currentVideoTitle = null;
+        let currentChannelTitle = null;
+        let currentThumbnailUrl = null;
+        
+        function openVideoPlayer(videoId, title, channelTitle = '', thumbnailUrl = '') {
+            const modal = document.getElementById('videoModal');
+            const player = document.getElementById('youtubePlayer');
+            const titleEl = document.getElementById('modalVideoTitle');
+            const watchBtn = document.getElementById('watchOnYoutubeBtn');
+            
+            currentVideoId = videoId;
+            currentVideoTitle = title;
+            currentChannelTitle = channelTitle;
+            currentThumbnailUrl = thumbnailUrl;
+            
+            player.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`;
+            titleEl.textContent = title;
+            watchBtn.href = `https://www.youtube.com/watch?v=${videoId}`;
+            
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+            
+            // Save watch history for personalization
+            saveWatchHistory(videoId, title, channelTitle, thumbnailUrl);
+        }
+        
+        // ==================== User History & Personalization ====================
+        
+        // Save search history to personalize recommendations
+        async function saveSearchHistory(query) {
+            try {
+                await fetch('/api/history/search', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ query: query })
+                });
+            } catch (error) {
+                console.log('Could not save search history:', error);
+            }
+        }
+        
+        // Save watch history for personalization
+        async function saveWatchHistory(videoId, title, channelTitle, thumbnailUrl) {
+            try {
+                await fetch('/api/history/watch', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        videoId: videoId,
+                        videoTitle: title,
+                        channelTitle: channelTitle || '',
+                        thumbnailUrl: thumbnailUrl || '',
+                        category: currentFilter !== 'all' ? currentFilter : ''
+                    })
+                });
+            } catch (error) {
+                console.log('Could not save watch history:', error);
+            }
+        }
+        
+        // Load personalized recommendations
+        async function loadPersonalizedVideos() {
+            try {
+                const response = await fetch('/api/videos/personalized?maxResults=20');
+                const data = await response.json();
+                
+                if (data.videos && data.videos.length > 0) {
+                    return data;
+                }
+            } catch (error) {
+                console.log('Personalization not available:', error);
+            }
+            return null;
+        }
+        
+        // Get recent searches for autocomplete/suggestions
+        async function getRecentSearches() {
+            try {
+                const response = await fetch('/api/history/searches?limit=5');
+                const data = await response.json();
+                return data.searches || [];
+            } catch (error) {
+                return [];
+            }
+        }
+        
+        function startWatchTogether() {
+            if (currentVideoId) {
+                // Navigate to watch-together with video parameters
+                window.location.href = `/watch-together/create-with-video?videoId=${currentVideoId}&title=${encodeURIComponent(currentVideoTitle)}`;
+            }
+        }
+        
+        function closeVideoPlayer() {
+            const modal = document.getElementById('videoModal');
+            const player = document.getElementById('youtubePlayer');
+            
+            player.src = '';
+            modal.classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+        
+        // Close modal on Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeVideoPlayer();
+            }
+        });
+        
+        // ==================== Search Functionality ====================
+        let isSearchMode = false;
+        let searchPageToken = '';
+        let currentSearchQuery = '';
+        
+        function handleSearch(event) {
+            event.preventDefault();
+            const query = document.getElementById('searchInput').value.trim();
+            if (!query) return false;
+            
+            currentSearchQuery = query;
+            searchPageToken = '';
+            isSearchMode = true;
+            
+            // Save search history for personalization
+            saveSearchHistory(query);
+            
+            // Show clear button
+            document.getElementById('clearSearchBtn').classList.remove('hidden');
+            
+            // Clear existing videos and show loading
+            const videoGrid = document.getElementById('videoGrid');
+            videoGrid.innerHTML = `
+                <div class="col-span-full text-center py-12">
+                    <i class="fas fa-spinner fa-spin text-4xl text-indigo-600"></i>
+                    <p class="mt-4 text-gray-600">Searching for "${escapeHtml(query)}"...</p>
+                </div>
+            `;
+            
+            performSearch(query, false);
+            return false;
+        }
+        
+        async function performSearch(query, append = false) {
+            try {
+                let url = `/api/search?query=${encodeURIComponent(query)}&maxResults=20`;
+                if (searchPageToken && append) {
+                    url += `&pageToken=${searchPageToken}`;
+                }
+                
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                const videoGrid = document.getElementById('videoGrid');
+                
+                if (!append) {
+                    videoGrid.innerHTML = '';
+                }
+                
+                if (data.videos && data.videos.length > 0) {
+                    data.videos.forEach(video => {
+                        const videoCard = document.createElement('div');
+                        videoCard.className = 'video-card bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200 cursor-pointer';
+                        videoCard.dataset.videoId = video.videoId;
+                        videoCard.dataset.videoTitle = video.title;
+                        
+                        videoCard.innerHTML = `
                             <div class="video-thumbnail bg-gray-200 relative">
-                                <img src="https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg" class="w-full h-full object-cover">
-                                <span class="video-duration absolute bottom-2 right-2 text-white text-xs px-1.5 py-0.5 rounded">10:30</span>
+                                <img src="${video.thumbnailUrl}" class="w-full h-full object-cover" loading="lazy">
+                                <span class="video-duration absolute bottom-2 right-2 text-white text-xs px-1.5 py-0.5 rounded">${video.duration || ''}</span>
                             </div>
                             <div class="p-4">
                                 <div class="flex items-start mt-2">
-                                    <img src="https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg" class="w-8 h-8 rounded-full mr-3 mt-1">
+                                    <img src="${video.channelThumbnail || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(video.channelTitle || 'C') + '&size=32'}" 
+                                         class="w-8 h-8 rounded-full mr-3 mt-1">
                                     <div>
-                                        <h3 class="video-title font-medium text-gray-900 mb-1 line-clamp-2">New Video Title ${Math.floor(Math.random() * 100)}</h3>
-                                        <p class="text-gray-600 text-sm">Channel Name • ${Math.floor(Math.random() * 10)}K views • 1 day ago</p>
+                                        <h3 class="video-title font-medium text-gray-900 mb-1 line-clamp-2">${escapeHtml(video.title)}</h3>
+                                        <p class="text-gray-600 text-sm">${escapeHtml(video.channelTitle || '')} • ${video.viewCount || ''} views • ${video.publishedAt || ''}</p>
                                     </div>
                                 </div>
                             </div>
+                        `;
+                        
+                        videoGrid.appendChild(videoCard);
+                    });
+                    
+                    searchPageToken = data.nextPageToken || '';
+                    
+                    // Update nextPageToken for infinite scroll
+                    if (isSearchMode) {
+                        nextPageToken = searchPageToken;
+                    }
+                } else if (!append) {
+                    videoGrid.innerHTML = `
+                        <div class="col-span-full text-center py-12">
+                            <i class="fas fa-search text-4xl text-gray-400 mb-4"></i>
+                            <p class="text-gray-600">No videos found for "${escapeHtml(query)}"</p>
+                            <button onclick="clearSearch()" class="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+                                Back to Home
+                            </button>
                         </div>
                     `;
                 }
                 
+                // Show/hide load more button
+                const loadMoreBtn = document.getElementById('loadMoreBtn');
+                if (searchPageToken) {
+                    loadMoreBtn.style.display = 'block';
+                } else {
+                    loadMoreBtn.style.display = 'none';
+                }
+                
+            } catch (error) {
+                console.error('Search error:', error);
+                const videoGrid = document.getElementById('videoGrid');
+                if (!append) {
+                    videoGrid.innerHTML = `
+                        <div class="col-span-full text-center py-12">
+                            <i class="fas fa-exclamation-circle text-4xl text-red-500 mb-4"></i>
+                            <p class="text-gray-600">Search failed. Please try again.</p>
+                            <button onclick="handleSearch(new Event('submit'))" class="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+                                Retry
+                            </button>
+                        </div>
+                    `;
+                }
+            }
+        }
+        
+        function clearSearch() {
+            isSearchMode = false;
+            currentSearchQuery = '';
+            searchPageToken = '';
+            nextPageToken = '';
+            
+            // Hide clear button
+            document.getElementById('clearSearchBtn').classList.add('hidden');
+            
+            // Clear search input
+            document.getElementById('searchInput').value = '';
+            
+            // Reload home videos
+            const videoGrid = document.getElementById('videoGrid');
+            videoGrid.innerHTML = `
+                <div class="col-span-full text-center py-12">
+                    <i class="fas fa-spinner fa-spin text-4xl text-indigo-600"></i>
+                    <p class="mt-4 text-gray-600">Loading videos...</p>
+                </div>
+            `;
+            
+            // Fetch home videos
+            loadHomeVideos();
+        }
+        
+        async function loadHomeVideos() {
+            try {
+                // First try to get personalized recommendations
+                const personalizedData = await loadPersonalizedVideos();
+                
+                if (personalizedData && personalizedData.videos && personalizedData.videos.length > 0) {
+                    const videoGrid = document.getElementById('videoGrid');
+                    videoGrid.innerHTML = '';
+                    
+                    // Show personalization indicator if applicable
+                    const forYouIndicator = document.getElementById('forYouIndicator');
+                    if (personalizedData.personalized && forYouIndicator) {
+                        forYouIndicator.classList.remove('hidden');
+                        forYouIndicator.classList.add('flex');
+                        console.log('Showing personalized recommendations');
+                    } else if (forYouIndicator) {
+                        forYouIndicator.classList.add('hidden');
+                        forYouIndicator.classList.remove('flex');
+                    }
+                    
+                    appendVideos(personalizedData.videos);
+                    nextPageToken = personalizedData.nextPageToken || '';
+                    
+                    const loadMoreBtn = document.getElementById('loadMoreBtn');
+                    if (nextPageToken) {
+                        loadMoreBtn.style.display = 'block';
+                    }
+                    return;
+                }
+                
+                // Fallback to regular trending videos - hide For You indicator
+                const forYouIndicator = document.getElementById('forYouIndicator');
+                if (forYouIndicator) {
+                    forYouIndicator.classList.add('hidden');
+                    forYouIndicator.classList.remove('flex');
+                }
+                
+                const response = await fetch('/api/videos?regionCode=IN&maxResults=20');
+                const data = await response.json();
+                
+                const videoGrid = document.getElementById('videoGrid');
+                videoGrid.innerHTML = '';
+                
+                if (data.videos && data.videos.length > 0) {
+                    appendVideos(data.videos);
+                    nextPageToken = data.nextPageToken || '';
+                    
+                    const loadMoreBtn = document.getElementById('loadMoreBtn');
+                    if (nextPageToken) {
+                        loadMoreBtn.style.display = 'block';
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading home videos:', error);
+            }
+        }
+        
+        // Override loadMoreVideos to handle search mode
+        const originalLoadMoreVideos = loadMoreVideos;
+        loadMoreVideos = async function() {
+            if (isSearchMode && currentSearchQuery) {
+                if (isLoading) return;
+                isLoading = true;
+                document.getElementById('loadMoreBtn').innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Loading...';
+                
+                await performSearch(currentSearchQuery, true);
+                
                 isLoading = false;
                 document.getElementById('loadMoreBtn').innerHTML = '<i class="fas fa-sync-alt mr-2"></i> Load More Videos';
-            }, 1000);
+            } else if (currentFilter !== 'all') {
+                await loadFilteredVideos(true);
+            } else {
+                await originalLoadMoreVideos();
+            }
+        };
+        
+        // ==================== Filter Functionality ====================
+        let currentFilter = 'all';
+        let filterPageToken = '';
+        
+        // Category IDs for YouTube API
+        const categoryMap = {
+            'music': '10',
+            'gaming': '20',
+            'news': '25',
+            'sports': '17',
+            'entertainment': '24',
+            'tech': '28'
+        };
+        
+        async function filterVideos(filter) {
+            currentFilter = filter;
+            isSearchMode = false;
+            filterPageToken = '';
+            nextPageToken = '';
+            
+            // Update button styles
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('bg-indigo-600', 'text-white');
+                btn.classList.add('bg-gray-200');
+            });
+            
+            const activeBtn = document.getElementById('filter' + filter.charAt(0).toUpperCase() + filter.slice(1));
+            if (activeBtn) {
+                activeBtn.classList.remove('bg-gray-200');
+                activeBtn.classList.add('bg-indigo-600', 'text-white');
+            }
+            
+            // Show loading
+            const videoGrid = document.getElementById('videoGrid');
+            videoGrid.innerHTML = `
+                <div class="col-span-full text-center py-12">
+                    <i class="fas fa-spinner fa-spin text-4xl text-indigo-600"></i>
+                    <p class="mt-4 text-gray-600">Loading videos...</p>
+                </div>
+            `;
+            
+            await loadFilteredVideos(false);
+        }
+        
+        async function loadFilteredVideos(append = false) {
+            if (isLoading && append) return;
+            
+            isLoading = true;
+            if (append) {
+                document.getElementById('loadMoreBtn').innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Loading...';
+            }
+            
+            try {
+                let url;
+                
+                if (currentFilter === 'all') {
+                    url = `/api/videos?regionCode=IN&maxResults=20`;
+                    if (filterPageToken && append) {
+                        url += `&pageToken=${filterPageToken}`;
+                    }
+                } else if (currentFilter === 'today' || currentFilter === 'week') {
+                    // For today/this week, we'll search for recent uploads
+                    const searchQuery = currentFilter === 'today' ? 'trending today India' : 'trending this week India';
+                    url = `/api/search?query=${encodeURIComponent(searchQuery)}&maxResults=20`;
+                    if (filterPageToken && append) {
+                        url += `&pageToken=${filterPageToken}`;
+                    }
+                } else if (categoryMap[currentFilter]) {
+                    // Category-based filter
+                    url = `/api/watch-together/category/${categoryMap[currentFilter]}?regionCode=IN&maxResults=20`;
+                    if (filterPageToken && append) {
+                        url += `&pageToken=${filterPageToken}`;
+                    }
+                } else {
+                    // Fallback to search
+                    url = `/api/search?query=${encodeURIComponent(currentFilter)}&maxResults=20`;
+                    if (filterPageToken && append) {
+                        url += `&pageToken=${filterPageToken}`;
+                    }
+                }
+                
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                const videoGrid = document.getElementById('videoGrid');
+                
+                if (!append) {
+                    videoGrid.innerHTML = '';
+                }
+                
+                if (data.videos && data.videos.length > 0) {
+                    appendVideos(data.videos);
+                    filterPageToken = data.nextPageToken || '';
+                    nextPageToken = filterPageToken;
+                } else if (!append) {
+                    videoGrid.innerHTML = `
+                        <div class="col-span-full text-center py-12">
+                            <i class="fas fa-video-slash text-4xl text-gray-400 mb-4"></i>
+                            <p class="text-gray-600">No videos found</p>
+                        </div>
+                    `;
+                }
+                
+                // Show/hide load more button
+                const loadMoreBtn = document.getElementById('loadMoreBtn');
+                if (filterPageToken) {
+                    loadMoreBtn.style.display = 'block';
+                } else {
+                    loadMoreBtn.style.display = 'none';
+                }
+                
+            } catch (error) {
+                console.error('Filter error:', error);
+            } finally {
+                isLoading = false;
+                document.getElementById('loadMoreBtn').innerHTML = '<i class="fas fa-sync-alt mr-2"></i> Load More Videos';
+            }
+        }
+        
+        // ==================== Content Type (Videos/Shorts) ====================
+        let currentContentType = 'videos';
+        
+        function setContentType(type) {
+            currentContentType = type;
+            
+            // Update tab styles
+            document.getElementById('videosTab').classList.remove('bg-indigo-50', 'text-indigo-600');
+            document.getElementById('videosTab').classList.add('text-gray-700');
+            document.getElementById('shortsTab').classList.remove('bg-indigo-50', 'text-indigo-600');
+            document.getElementById('shortsTab').classList.add('text-gray-700');
+            
+            if (type === 'videos') {
+                document.getElementById('videosTab').classList.add('bg-indigo-50', 'text-indigo-600');
+                document.getElementById('videosTab').classList.remove('text-gray-700');
+                filterVideos('all');
+            } else {
+                document.getElementById('shortsTab').classList.add('bg-indigo-50', 'text-indigo-600');
+                document.getElementById('shortsTab').classList.remove('text-gray-700');
+                loadShorts();
+            }
+        }
+        
+        async function loadShorts() {
+            const videoGrid = document.getElementById('videoGrid');
+            videoGrid.innerHTML = `
+                <div class="col-span-full text-center py-12">
+                    <i class="fas fa-spinner fa-spin text-4xl text-indigo-600"></i>
+                    <p class="mt-4 text-gray-600">Loading Shorts...</p>
+                </div>
+            `;
+            
+            try {
+                // Search specifically for YouTube Shorts
+                const response = await fetch('/api/search?query=%23shorts%20India%20viral%20trending&maxResults=50');
+                const data = await response.json();
+                
+                videoGrid.innerHTML = '';
+                
+                if (data.videos && data.videos.length > 0) {
+                    // Filter to only show actual shorts (under 60 seconds or has #shorts)
+                    const shortsOnly = data.videos.filter(video => isShortVideo(video));
+                    
+                    if (shortsOnly.length > 0) {
+                        appendShorts(data.videos); // appendShorts already filters
+                        
+                        // Check if we got enough shorts
+                        const displayedCount = videoGrid.children.length;
+                        if (displayedCount === 0) {
+                            // If no shorts were displayed, show all as shorts (API returned shorts-related content)
+                            data.videos.slice(0, 20).forEach(video => {
+                                const videoCard = document.createElement('div');
+                                videoCard.className = 'video-card bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200 cursor-pointer';
+                                videoCard.dataset.videoId = video.videoId;
+                                videoCard.dataset.videoTitle = video.title;
+                                
+                                videoCard.innerHTML = `
+                                    <div class="video-thumbnail bg-gray-200 relative">
+                                        <img src="${video.thumbnailUrl}" class="w-full h-full object-cover" loading="lazy">
+                                        <span class="absolute top-2 left-2 bg-red-600 text-white text-xs px-2 py-1 rounded">
+                                            <i class="fas fa-bolt mr-1"></i>SHORT
+                                        </span>
+                                        <span class="video-duration absolute bottom-2 right-2 text-white text-xs px-1.5 py-0.5 rounded">${video.duration || ''}</span>
+                                    </div>
+                                    <div class="p-4">
+                                        <div class="flex items-start mt-2">
+                                            <img src="${video.channelThumbnail || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(video.channelTitle || 'C') + '&size=32'}" 
+                                                 class="w-8 h-8 rounded-full mr-3 mt-1">
+                                            <div>
+                                                <h3 class="video-title font-medium text-gray-900 mb-1 line-clamp-2">${escapeHtml(video.title)}</h3>
+                                                <p class="text-gray-600 text-sm">${escapeHtml(video.channelTitle || '')} • ${video.viewCount || ''} views</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `;
+                                
+                                videoGrid.appendChild(videoCard);
+                            });
+                        }
+                        
+                        nextPageToken = data.nextPageToken || '';
+                        document.getElementById('loadMoreBtn').style.display = nextPageToken ? 'block' : 'none';
+                    } else {
+                        videoGrid.innerHTML = `
+                            <div class="col-span-full text-center py-12">
+                                <i class="fas fa-video-slash text-4xl text-gray-400 mb-4"></i>
+                                <p class="text-gray-600">No Shorts found</p>
+                            </div>
+                        `;
+                    }
+                } else {
+                    videoGrid.innerHTML = `
+                        <div class="col-span-full text-center py-12">
+                            <i class="fas fa-video-slash text-4xl text-gray-400 mb-4"></i>
+                            <p class="text-gray-600">No Shorts found</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading shorts:', error);
+                videoGrid.innerHTML = `
+                    <div class="col-span-full text-center py-12">
+                        <i class="fas fa-exclamation-circle text-4xl text-red-500 mb-4"></i>
+                        <p class="text-gray-600">Failed to load Shorts</p>
+                    </div>
+                `;
+            }
         }
     </script>
 </body>

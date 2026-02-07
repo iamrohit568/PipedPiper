@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Watch Together - Room <span th:text="${roomId}"></span> | Piped Piper</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- SockJS and STOMP for WebSocket -->
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+    <style>
+        .video-container {
+            aspect-ratio: 16 / 9;
+        }
+        .chat-messages {
+            height: 400px;
+            overflow-y: auto;
+        }
+        .video-card:hover {
+            transform: scale(1.02);
+        }
+        .participant-dot {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .sidebar-scroll {
+            max-height: calc(100vh - 200px);
+            overflow-y: auto;
+        }
+        .sidebar-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+        .sidebar-scroll::-webkit-scrollbar-thumb {
+            background-color: #c7d2fe;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="max-w-full mx-auto px-4">
+            <div class="flex justify-between h-14">
+                <div class="flex items-center">
+                    <a href="/watch-together" class="flex items-center">
+                        <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
+                            <i class="fab fa-youtube text-white text-sm"></i>
+                        </div>
+                        <span class="ml-2 font-semibold text-gray-900">Watch Together</span>
+                    </a>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <!-- Room Info -->
+                    <div class="flex items-center bg-indigo-100 px-4 py-2 rounded-lg">
+                        <span class="text-indigo-800 font-medium">Room:</span>
+                        <span id="roomIdDisplay" th:text="${roomId}" class="ml-2 font-bold text-indigo-600"></span>
+                        <button onclick="copyRoomLink()" class="ml-2 text-indigo-600 hover:text-indigo-800" title="Copy room link">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Participants Count -->
+                    <div class="flex items-center bg-green-100 px-3 py-2 rounded-lg">
+                        <span class="participant-dot w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                        <span id="participantCount" class="text-green-800 font-medium">1</span>
+                        <span class="text-green-600 ml-1">online</span>
+                    </div>
+                    
+                    <!-- Leave Room -->
+                    <a href="/watch-together" class="text-gray-600 hover:text-red-600">
+                        <i class="fas fa-sign-out-alt mr-1"></i> Leave
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="flex h-[calc(100vh-56px)]">
+        <!-- Main Content - Video Player & Video List -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <!-- Video Player Section -->
+            <div class="bg-black p-4">
+                <div class="max-w-5xl mx-auto">
+                    <div class="video-container bg-gray-900 rounded-lg overflow-hidden relative">
+                        <div id="player"></div>
+                        <div id="noVideoOverlay" class="absolute inset-0 flex items-center justify-center bg-gray-900">
+                            <div class="text-center text-white">
+                                <i class="fas fa-play-circle text-6xl mb-4 text-indigo-400"></i>
+                                <p class="text-xl">Select a video to start watching together</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Video Title -->
+                    <div class="mt-3 text-white">
+                        <h2 id="currentVideoTitle" class="text-xl font-semibold">No video selected</h2>
+                        <p id="currentVideoChannel" class="text-gray-400 mt-1"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Video List Section -->
+            <div id="videoListSection" class="flex-1 overflow-y-auto p-4 bg-gray-50">
+                <!-- Search Bar -->
+                <div class="max-w-5xl mx-auto mb-4">
+                    <div class="flex gap-2">
+                        <div class="flex-1 relative">
+                            <input type="text" id="searchInput" 
+                                   placeholder="Search YouTube videos..."
+                                   class="w-full px-4 py-3 pl-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                        </div>
+                        <button onclick="searchVideos()" class="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition-colors">
+                            Search
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Category Filter -->
+                <div class="max-w-5xl mx-auto mb-4">
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="filterByCategory('all')" id="catAll" class="category-btn px-4 py-2 rounded-full text-sm font-medium bg-indigo-600 text-white">
+                            All
+                        </button>
+                        <button onclick="filterByCategory('10')" id="cat10" class="category-btn px-4 py-2 rounded-full text-sm font-medium bg-gray-200 text-gray-700 hover:bg-gray-300">
+                            <i class="fas fa-music mr-1"></i>Music
+                        </button>
+                        <button onclick="filterByCategory('20')" id="cat20" class="category-btn px-4 py-2 rounded-full text-sm font-medium bg-gray-200 text-gray-700 hover:bg-gray-300">
+                            <i class="fas fa-gamepad mr-1"></i>Gaming
+                        </button>
+                        <button onclick="filterByCategory('24')" id="cat24" class="category-btn px-4 py-2 rounded-full text-sm font-medium bg-gray-200 text-gray-700 hover:bg-gray-300">
+                            <i class="fas fa-film mr-1"></i>Entertainment
+                        </button>
+                        <button onclick="filterByCategory('28')" id="cat28" class="category-btn px-4 py-2 rounded-full text-sm font-medium bg-gray-200 text-gray-700 hover:bg-gray-300">
+                            <i class="fas fa-flask mr-1"></i>Science & Tech
+                        </button>
+                        <button onclick="filterByCategory('17')" id="cat17" class="category-btn px-4 py-2 rounded-full text-sm font-medium bg-gray-200 text-gray-700 hover:bg-gray-300">
+                            <i class="fas fa-futbol mr-1"></i>Sports
+                        </button>
+                        <button onclick="filterByCategory('25')" id="cat25" class="category-btn px-4 py-2 rounded-full text-sm font-medium bg-gray-200 text-gray-700 hover:bg-gray-300">
+                            <i class="fas fa-newspaper mr-1"></i>News
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Video Grid -->
+                <div class="max-w-5xl mx-auto">
+                    <div id="videoGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        <!-- Videos will be loaded here -->
+                        <div class="col-span-full text-center py-8">
+                            <i class="fas fa-spinner fa-spin text-4xl text-indigo-600"></i>
+                            <p class="mt-2 text-gray-600">Loading videos...</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Load More / Infinite Scroll Indicator -->
+                    <div id="loadMoreContainer" class="text-center py-6 hidden">
+                        <div id="loadingMore" class="hidden">
+                            <i class="fas fa-spinner fa-spin text-2xl text-indigo-600"></i>
+                            <p class="mt-2 text-gray-600">Loading more videos...</p>
+                        </div>
+                        <button id="loadMoreBtn" onclick="loadMoreVideos()" class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition-colors hidden">
+                            Load More Videos
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Sidebar -->
+        <div class="w-80 bg-white border-l border-gray-200 flex flex-col">
+            <!-- Chat Header -->
+            <div class="p-4 border-b border-gray-200">
+                <h3 class="font-semibold text-gray-900">
+                    <i class="fas fa-comments text-indigo-600 mr-2"></i>Live Chat
+                </h3>
+            </div>
+
+            <!-- Participants List -->
+            <div class="p-3 border-b border-gray-200 bg-gray-50">
+                <h4 class="text-xs font-semibold text-gray-500 uppercase mb-2">In this room</h4>
+                <div id="participantsList" class="flex flex-wrap gap-2">
+                    <!-- Participants will be added here -->
+                </div>
+            </div>
+
+            <!-- Chat Messages -->
+            <div id="chatMessages" class="chat-messages flex-1 p-4 space-y-3 overflow-y-auto">
+                <div class="text-center text-gray-500 text-sm">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    Chat messages will appear here
+                </div>
+            </div>
+
+            <!-- Chat Input -->
+            <div class="p-4 border-t border-gray-200">
+                <form id="chatForm" class="flex gap-2">
+                    <input type="text" id="chatInput" 
+                           placeholder="Type a message..."
+                           class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Copy Link Toast -->
+    <div id="copyToast" class="fixed bottom-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg transform translate-y-20 opacity-0 transition-all duration-300">
+        <i class="fas fa-check-circle mr-2"></i>Room link copied to clipboard!
+    </div>
+
+    <!-- YouTube IFrame API -->
+    <script src="https://www.youtube.com/iframe_api"></script>
+
+    <script th:inline="javascript">
+        // Room configuration
+        const roomId = /*[[${roomId}]]*/ '';
+        const username = /*[[${username}]]*/ '';
+        const isHost = /*[[${isHost}]]*/ false;
+        const initialVideoId = /*[[${initialVideoId}]]*/ '';
+        const initialVideoTitle = /*[[${initialVideoTitle}]]*/ '';
+        
+        let stompClient = null;
+        let player = null;
+        let isPlayerReady = false;
+        let isSyncing = false; // Prevent sync loops
+        let currentVideoId = null;
+
+        // ==================== WebSocket Connection ====================
+        function connectWebSocket() {
+            const socket = new SockJS('/ws-watch-together');
+            stompClient = Stomp.over(socket);
+            stompClient.debug = null; // Disable debug logs
+            
+            stompClient.connect({}, function(frame) {
+                console.log('Connected to WebSocket');
+                
+                // Subscribe to chat messages
+                stompClient.subscribe('/topic/chat/' + roomId, function(message) {
+                    const chatMessage = JSON.parse(message.body);
+                    displayChatMessage(chatMessage);
+                });
+                
+                // Subscribe to room events (join/leave)
+                stompClient.subscribe('/topic/room/' + roomId, function(message) {
+                    const roomMessage = JSON.parse(message.body);
+                    handleRoomEvent(roomMessage);
+                });
+                
+                // Subscribe to video sync
+                stompClient.subscribe('/topic/sync/' + roomId, function(message) {
+                    const syncMessage = JSON.parse(message.body);
+                    handleVideoSync(syncMessage);
+                });
+                
+                // Subscribe to personal sync response
+                stompClient.subscribe('/user/queue/sync-response', function(message) {
+                    const syncMessage = JSON.parse(message.body);
+                    handleSyncResponse(syncMessage);
+                });
+                
+                // Announce joining
+                sendJoinMessage();
+                
+                // Request current video state
+                requestSync();
+                
+            }, function(error) {
+                console.error('WebSocket connection error:', error);
+                setTimeout(connectWebSocket, 5000); // Reconnect after 5 seconds
+            });
+        }
+
+        // ==================== Chat Functions ====================
+        function sendJoinMessage() {
+            stompClient.send('/app/join/' + roomId, {}, JSON.stringify({
+                sender: username,
+                type: 'JOIN'
+            }));
+        }
+
+        function sendChatMessage(content) {
+            stompClient.send('/app/chat/' + roomId, {}, JSON.stringify({
+                sender: username,
+                content: content,
+                type: 'CHAT'
+            }));
+        }
+
+        function displayChatMessage(message) {
+            const chatContainer = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            
+            if (message.type === 'JOIN' || message.type === 'LEAVE') {
+                messageDiv.className = 'text-center text-sm';
+                messageDiv.innerHTML = `
+                    <span class="bg-gray-100 text-gray-600 px-3 py-1 rounded-full">
+                        <i class="fas fa-${message.type === 'JOIN' ? 'sign-in-alt' : 'sign-out-alt'} mr-1"></i>
+                        ${message.sender} ${message.type === 'JOIN' ? 'joined' : 'left'} the room
+                    </span>
+                `;
+            } else {
+                const isOwnMessage = message.sender === username;
+                messageDiv.className = `flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`;
+                messageDiv.innerHTML = `
+                    <div class="max-w-[80%] ${isOwnMessage ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-900'} rounded-lg px-3 py-2">
+                        <div class="text-xs ${isOwnMessage ? 'text-indigo-200' : 'text-gray-500'} mb-1">${message.sender}</div>
+                        <div>${escapeHtml(message.content)}</div>
+                    </div>
+                `;
+            }
+            
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function handleRoomEvent(message) {
+            displayChatMessage(message);
+            fetchRoomInfo();
+        }
+
+        // ==================== Video Sync Functions ====================
+        function requestSync() {
+            stompClient.send('/app/sync-request/' + roomId, {}, JSON.stringify({
+                username: username
+            }));
+        }
+
+        function sendVideoSync(action, currentTime = null) {
+            if (isSyncing || !player || !currentVideoId) return;
+            
+            const message = {
+                username: username,
+                videoId: currentVideoId,
+                currentTime: currentTime !== null ? currentTime : player.getCurrentTime(),
+                isPlaying: player.getPlayerState() === YT.PlayerState.PLAYING,
+                action: action
+            };
+            
+            stompClient.send('/app/sync/' + roomId, {}, JSON.stringify(message));
+        }
+
+        function sendVideoChange(videoId, videoTitle) {
+            stompClient.send('/app/video-change/' + roomId, {}, JSON.stringify({
+                username: username,
+                videoId: videoId,
+                videoTitle: videoTitle
+            }));
+        }
+
+        function handleVideoSync(message) {
+            if (message.username === username) return; // Ignore own messages
+            
+            isSyncing = true;
+            
+            switch(message.action) {
+                case 'PLAY':
+                    if (player && isPlayerReady) {
+                        player.seekTo(message.currentTime, true);
+                        player.playVideo();
+                    }
+                    break;
+                case 'PAUSE':
+                    if (player && isPlayerReady) {
+                        player.seekTo(message.currentTime, true);
+                        player.pauseVideo();
+                    }
+                    break;
+                case 'SEEK':
+                    if (player && isPlayerReady) {
+                        player.seekTo(message.currentTime, true);
+                    }
+                    break;
+                case 'CHANGE_VIDEO':
+                    loadVideo(message.videoId, message.videoTitle, false);
+                    displayChatMessage({
+                        type: 'SYSTEM',
+                        sender: message.username,
+                        content: `changed the video to: ${message.videoTitle}`
+                    });
+                    break;
+            }
+            
+            setTimeout(() => { isSyncing = false; }, 500);
+        }
+
+        function handleSyncResponse(message) {
+            if (message.videoId) {
+                isSyncing = true;
+                loadVideo(message.videoId, message.videoTitle, false);
+                
+                // Wait for player to be ready, then sync position
+                const checkReady = setInterval(() => {
+                    if (player && isPlayerReady) {
+                        clearInterval(checkReady);
+                        player.seekTo(message.currentTime, true);
+                        if (message.isPlaying) {
+                            player.playVideo();
+                        }
+                        setTimeout(() => { isSyncing = false; }, 500);
+                    }
+                }, 100);
+            }
+        }
+
+        // ==================== YouTube Player ====================
+        function onYouTubeIframeAPIReady() {
+            player = new YT.Player('player', {
+                height: '100%',
+                width: '100%',
+                playerVars: {
+                    'playsinline': 1,
+                    'rel': 0,
+                    'modestbranding': 1
+                },
+                events: {
+                    'onReady': onPlayerReady,
+                    'onStateChange': onPlayerStateChange
+                }
+            });
+        }
+
+        function onPlayerReady(event) {
+            isPlayerReady = true;
+            console.log('YouTube player ready');
+            
+            // Load initial video if provided (from youtube-view page)
+            if (initialVideoId && isHost) {
+                loadVideo(initialVideoId, initialVideoTitle, true);
+            }
+        }
+
+        function onPlayerStateChange(event) {
+            if (isSyncing) return;
+            
+            switch(event.data) {
+                case YT.PlayerState.PLAYING:
+                    sendVideoSync('PLAY');
+                    break;
+                case YT.PlayerState.PAUSED:
+                    sendVideoSync('PAUSE');
+                    break;
+            }
+        }
+
+        function loadVideo(videoId, title, broadcast = true) {
+            if (!player || !isPlayerReady) {
+                // Wait for player to be ready
+                const checkReady = setInterval(() => {
+                    if (player && isPlayerReady) {
+                        clearInterval(checkReady);
+                        loadVideo(videoId, title, broadcast);
+                    }
+                }, 100);
+                return;
+            }
+            
+            currentVideoId = videoId;
+            player.loadVideoById(videoId);
+            document.getElementById('currentVideoTitle').textContent = title;
+            document.getElementById('noVideoOverlay').classList.add('hidden');
+            
+            if (broadcast) {
+                sendVideoChange(videoId, title);
+            }
+        }
+
+        // ==================== Video Loading with Infinite Scroll ====================
+        let nextPageToken = null;
+        let searchNextPageToken = null;
+        let isLoadingVideos = false;
+        let currentMode = 'home'; // 'home', 'category', 'search'
+        let currentCategory = 'all';
+        let currentSearchQuery = '';
+
+        async function loadHomeVideos(append = false) {
+            if (isLoadingVideos) return;
+            isLoadingVideos = true;
+            
+            const container = document.getElementById('videoGrid');
+            const loadMoreContainer = document.getElementById('loadMoreContainer');
+            const loadingMore = document.getElementById('loadingMore');
+            
+            if (!append) {
+                container.innerHTML = `
+                    <div class="col-span-full text-center py-8">
+                        <i class="fas fa-spinner fa-spin text-4xl text-indigo-600"></i>
+                        <p class="mt-2 text-gray-600">Loading videos...</p>
+                    </div>
+                `;
+                nextPageToken = null;
+            } else {
+                loadingMore.classList.remove('hidden');
+            }
+            
+            try {
+                let url = '/api/watch-together/videos?regionCode=IN&maxResults=20';
+                if (nextPageToken) {
+                    url += `&pageToken=${nextPageToken}`;
+                }
+                
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                nextPageToken = data.nextPageToken;
+                displayVideos(data.videos, append);
+                
+                // Show/hide load more based on nextPageToken
+                loadMoreContainer.classList.remove('hidden');
+                if (nextPageToken) {
+                    document.getElementById('loadMoreBtn').classList.remove('hidden');
+                } else {
+                    document.getElementById('loadMoreBtn').classList.add('hidden');
+                }
+            } catch (error) {
+                console.error('Error loading videos:', error);
+                if (!append) {
+                    container.innerHTML = `
+                        <div class="col-span-full text-center py-8 text-red-500">
+                            <i class="fas fa-exclamation-circle text-4xl mb-4"></i>
+                            <p>Failed to load videos. Please try again.</p>
+                            <button onclick="loadHomeVideos()" class="mt-4 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700">
+                                Retry
+                            </button>
+                        </div>
+                    `;
+                }
+            } finally {
+                isLoadingVideos = false;
+                loadingMore.classList.add('hidden');
+            }
+        }
+
+        async function loadCategoryVideos(categoryId, append = false) {
+            if (isLoadingVideos) return;
+            isLoadingVideos = true;
+            
+            const container = document.getElementById('videoGrid');
+            const loadMoreContainer = document.getElementById('loadMoreContainer');
+            const loadingMore = document.getElementById('loadingMore');
+            
+            if (!append) {
+                container.innerHTML = `
+                    <div class="col-span-full text-center py-8">
+                        <i class="fas fa-spinner fa-spin text-4xl text-indigo-600"></i>
+                        <p class="mt-2 text-gray-600">Loading videos...</p>
+                    </div>
+                `;
+                nextPageToken = null;
+            } else {
+                loadingMore.classList.remove('hidden');
+            }
+            
+            try {
+                let url = `/api/watch-together/category/${categoryId}?regionCode=IN&maxResults=20`;
+                if (nextPageToken) {
+                    url += `&pageToken=${nextPageToken}`;
+                }
+                
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                nextPageToken = data.nextPageToken;
+                displayVideos(data.videos, append);
+                
+                loadMoreContainer.classList.remove('hidden');
+                if (nextPageToken) {
+                    document.getElementById('loadMoreBtn').classList.remove('hidden');
+                } else {
+                    document.getElementById('loadMoreBtn').classList.add('hidden');
+                }
+            } catch (error) {
+                console.error('Error loading category videos:', error);
+                if (!append) {
+                    container.innerHTML = `
+                        <div class="col-span-full text-center py-8 text-red-500">
+                            <i class="fas fa-exclamation-circle text-4xl mb-4"></i>
+                            <p>Failed to load videos. Please try again.</p>
+                        </div>
+                    `;
+                }
+            } finally {
+                isLoadingVideos = false;
+                loadingMore.classList.add('hidden');
+            }
+        }
+
+        async function searchVideos(append = false) {
+            const query = document.getElementById('searchInput').value.trim();
+            if (!query && !append) return;
+            
+            if (!append) {
+                currentSearchQuery = query;
+                searchNextPageToken = null;
+            }
+            
+            if (isLoadingVideos) return;
+            isLoadingVideos = true;
+            
+            currentMode = 'search';
+            const container = document.getElementById('videoGrid');
+            const loadMoreContainer = document.getElementById('loadMoreContainer');
+            const loadingMore = document.getElementById('loadingMore');
+            
+            // Update category buttons to show search is active
+            updateCategoryButtons('search');
+            
+            if (!append) {
+                container.innerHTML = `
+                    <div class="col-span-full text-center py-8">
+                        <i class="fas fa-spinner fa-spin text-4xl text-indigo-600"></i>
+                        <p class="mt-2 text-gray-600">Searching for "${currentSearchQuery}"...</p>
+                    </div>
+                `;
+            } else {
+                loadingMore.classList.remove('hidden');
+            }
+            
+            try {
+                let url = `/api/watch-together/search?query=${encodeURIComponent(currentSearchQuery)}&maxResults=20`;
+                if (searchNextPageToken && append) {
+                    url += `&pageToken=${searchNextPageToken}`;
+                }
+                
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                searchNextPageToken = data.nextPageToken;
+                nextPageToken = searchNextPageToken; // For loadMoreVideos function
+                displayVideos(data.videos, append);
+                
+                loadMoreContainer.classList.remove('hidden');
+                if (searchNextPageToken) {
+                    document.getElementById('loadMoreBtn').classList.remove('hidden');
+                } else {
+                    document.getElementById('loadMoreBtn').classList.add('hidden');
+                }
+            } catch (error) {
+                console.error('Error searching videos:', error);
+                if (!append) {
+                    container.innerHTML = `
+                        <div class="col-span-full text-center py-8 text-red-500">
+                            <i class="fas fa-exclamation-circle text-4xl mb-4"></i>
+                            <p>Search failed. Please try again.</p>
+                        </div>
+                    `;
+                }
+            } finally {
+                isLoadingVideos = false;
+                loadingMore.classList.add('hidden');
+            }
+        }
+
+        function filterByCategory(categoryId) {
+            currentCategory = categoryId;
+            currentMode = categoryId === 'all' ? 'home' : 'category';
+            nextPageToken = null;
+            
+            updateCategoryButtons(categoryId);
+            
+            if (categoryId === 'all') {
+                loadHomeVideos(false);
+            } else {
+                loadCategoryVideos(categoryId, false);
+            }
+        }
+
+        function updateCategoryButtons(activeId) {
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                btn.classList.remove('bg-indigo-600', 'text-white');
+                btn.classList.add('bg-gray-200', 'text-gray-700');
+            });
+            
+            const activeBtn = document.getElementById(`cat${activeId}`);
+            if (activeBtn) {
+                activeBtn.classList.remove('bg-gray-200', 'text-gray-700');
+                activeBtn.classList.add('bg-indigo-600', 'text-white');
+            }
+        }
+
+        function loadMoreVideos() {
+            if (currentMode === 'search') {
+                searchVideos(true);
+            } else if (currentMode === 'category') {
+                loadCategoryVideos(currentCategory, true);
+            } else {
+                loadHomeVideos(true);
+            }
+        }
+
+        function displayVideos(videos, append = false) {
+            const container = document.getElementById('videoGrid');
+            
+            if (videos.length === 0 && !append) {
+                container.innerHTML = `
+                    <div class="col-span-full text-center py-8 text-gray-500">
+                        <i class="fas fa-video-slash text-4xl mb-4"></i>
+                        <p>No videos found</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const videoCards = videos.map(video => `
+                <div class="video-card bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer"
+                     onclick="loadVideo('${video.videoId}', '${escapeHtml(video.title).replace(/'/g, "\\'")}')">
+                    <div class="relative aspect-video bg-gray-200">
+                        <img src="${video.thumbnailUrl}" alt="${escapeHtml(video.title)}" 
+                             class="w-full h-full object-cover" loading="lazy">
+                        ${video.duration ? `<span class="absolute bottom-1 right-1 bg-black bg-opacity-80 text-white text-xs px-1 rounded">${video.duration}</span>` : ''}
+                    </div>
+                    <div class="p-3">
+                        <h4 class="font-medium text-sm text-gray-900 line-clamp-2 mb-1">${escapeHtml(video.title)}</h4>
+                        <div class="flex items-center gap-2 mt-1">
+                            <img src="${video.channelThumbnail || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(video.channelTitle || 'C') + '&size=24'}" 
+                                 alt="${escapeHtml(video.channelTitle || '')}" 
+                                 class="w-6 h-6 rounded-full">
+                            <p class="text-xs text-gray-500 truncate">${escapeHtml(video.channelTitle || '')}</p>
+                        </div>
+                        <div class="flex items-center gap-2 mt-1 text-xs text-gray-400">
+                            ${video.viewCount ? `<span>${video.viewCount} views</span>` : ''}
+                            ${video.publishedAt ? `<span>• ${video.publishedAt}</span>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            if (append) {
+                container.insertAdjacentHTML('beforeend', videoCards);
+            } else {
+                container.innerHTML = videoCards;
+            }
+        }
+
+        // Infinite scroll detection
+        function setupInfiniteScroll() {
+            const videoListSection = document.getElementById('videoListSection');
+            
+            videoListSection.addEventListener('scroll', () => {
+                const { scrollTop, scrollHeight, clientHeight } = videoListSection;
+                
+                // Load more when user scrolls to bottom (with 200px threshold)
+                if (scrollTop + clientHeight >= scrollHeight - 200 && !isLoadingVideos && nextPageToken) {
+                    loadMoreVideos();
+                }
+            });
+        }
+
+        // ==================== Room Functions ====================
+        async function fetchRoomInfo() {
+            try {
+                const response = await fetch(`/api/watch-together/room/${roomId}`);
+                const room = await response.json();
+                
+                document.getElementById('participantCount').textContent = room.participantCount;
+                
+                const participantsList = document.getElementById('participantsList');
+                participantsList.innerHTML = Array.from(room.participants || []).map(p => `
+                    <span class="bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded-full">
+                        <i class="fas fa-user mr-1"></i>${p}
+                    </span>
+                `).join('');
+                
+            } catch (error) {
+                console.error('Error fetching room info:', error);
+            }
+        }
+
+        function copyRoomLink() {
+            const link = window.location.href;
+            navigator.clipboard.writeText(link).then(() => {
+                const toast = document.getElementById('copyToast');
+                toast.classList.remove('translate-y-20', 'opacity-0');
+                setTimeout(() => {
+                    toast.classList.add('translate-y-20', 'opacity-0');
+                }, 3000);
+            });
+        }
+
+        // ==================== Utility Functions ====================
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function formatViewCount(count) {
+            const num = parseInt(count);
+            if (num >= 1000000) {
+                return (num / 1000000).toFixed(1) + 'M';
+            } else if (num >= 1000) {
+                return (num / 1000).toFixed(1) + 'K';
+            }
+            return num.toString();
+        }
+
+        // ==================== Event Listeners ====================
+        document.getElementById('chatForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            if (message) {
+                sendChatMessage(message);
+                input.value = '';
+            }
+        });
+
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchVideos();
+            }
+        });
+
+        // Handle page unload
+        window.addEventListener('beforeunload', function() {
+            if (stompClient) {
+                stompClient.send('/app/leave/' + roomId, {}, JSON.stringify({
+                    sender: username,
+                    type: 'LEAVE'
+                }));
+            }
+        });
+
+        // ==================== Initialize ====================
+        document.addEventListener('DOMContentLoaded', function() {
+            connectWebSocket();
+            loadHomeVideos(); // Load videos from YouTube home feed
+            setupInfiniteScroll(); // Enable infinite scroll
+            fetchRoomInfo();
+        });
+    </script>
+</body>
+</html>

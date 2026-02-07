@@ -69,8 +69,12 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.http.ResponseEntity;
 
 import com.example.yt_scrapper.Service.ytservice;
+import com.example.yt_scrapper.Service.UserHistoryService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -85,6 +89,9 @@ import java.security.Principal;
 public class ytController {
     @Autowired
     private ytservice youtubeservice;
+    
+    @Autowired
+    private UserHistoryService userHistoryService;
 
     @GetMapping("/")
     public String getHome() {
@@ -342,14 +349,30 @@ public String generateDescription(@RequestParam String keywords, Model model) {
 @GetMapping("/youtube-view")
 public String youtubeView(Model model, Principal principal) {
     try {
-        // 1. Get authenticated user's YouTube subscriptions
-        List<Map<String, String>> subscribedChannels = youtubeservice.getUserSubscriptions(principal.getName());
+        String username = principal != null ? principal.getName() : "Guest";
         
-        // 2. Get videos from subscribed channels
-        List<Map<String, String>> videos = youtubeservice.getSubscribedVideos(principal.getName());
+        // 1. Get REAL trending videos from YouTube API
+        List<Map<String, String>> videos = youtubeservice.getTrendingVideos("IN", 20);
         
-        // 3. Get user's channel info
-        Map<String, String> userChannel = youtubeservice.getUserChannelInfo(principal.getName());
+        // 2. Mock subscribed channels (can be enhanced later with real subscriptions)
+        List<Map<String, String>> subscribedChannels = new ArrayList<>();
+        subscribedChannels.add(Map.of(
+            "id", "UC_x5XG1OV2P6uZZ5FSM9Ttw",
+            "name", "Google Developers",
+            "thumbnail", "https://yt3.ggpht.com/ytc/AKedOLQ8kMrBnLwFyNBDJvVMYoKdlYsEQ=s88-c-k-c0x00ffffff-no-rj"
+        ));
+        subscribedChannels.add(Map.of(
+            "id", "UCVHFbqXqoYvEWM1Ddxl0QDg",
+            "name", "Android Developers",
+            "thumbnail", "https://yt3.ggpht.com/ytc/AKedOLTGIJDJkvYqQrXhFJ=s88-c-k-c0x00ffffff-no-rj"
+        ));
+        
+        // 3. User channel info
+        Map<String, String> userChannel = Map.of(
+            "name", username + "'s Channel",
+            "thumbnail", "https://ui-avatars.com/api/?name=" + username + "&background=6366f1&color=fff",
+            "subscriberCount", "0"
+        );
         
         model.addAttribute("subscribedChannels", subscribedChannels);
         model.addAttribute("videos", videos);
@@ -358,7 +381,227 @@ public String youtubeView(Model model, Principal principal) {
         return "youtube-view";
     } catch (Exception e) {
         e.printStackTrace();
-        return "error";
+        model.addAttribute("error", e.getMessage());
+        return "youtube-view";
+    }
+}
+
+/**
+ * API endpoint to load more videos with pagination (for infinite scroll)
+ */
+@GetMapping("/api/videos")
+@org.springframework.web.bind.annotation.ResponseBody
+public org.springframework.http.ResponseEntity<Map<String, Object>> getMoreVideos(
+        @RequestParam(defaultValue = "IN") String regionCode,
+        @RequestParam(required = false) String pageToken,
+        @RequestParam(defaultValue = "20") int maxResults) {
+    try {
+        Map<String, Object> result = youtubeservice.getHomeFeedVideos(regionCode, pageToken, maxResults);
+        return org.springframework.http.ResponseEntity.ok(result);
+    } catch (Exception e) {
+        e.printStackTrace();
+        Map<String, Object> error = new HashMap<>();
+        error.put("videos", new ArrayList<>());
+        error.put("nextPageToken", null);
+        error.put("error", e.getMessage());
+        return org.springframework.http.ResponseEntity.internalServerError().body(error);
+    }
+}
+
+/**
+ * API endpoint to search videos (for search functionality)
+ */
+@GetMapping("/api/search")
+@org.springframework.web.bind.annotation.ResponseBody
+public org.springframework.http.ResponseEntity<Map<String, Object>> searchVideos(
+        @RequestParam String query,
+        @RequestParam(required = false) String pageToken,
+        @RequestParam(defaultValue = "20") int maxResults) {
+    try {
+        Map<String, Object> result = youtubeservice.searchVideosWithPagination(query, pageToken, maxResults);
+        return org.springframework.http.ResponseEntity.ok(result);
+    } catch (Exception e) {
+        e.printStackTrace();
+        Map<String, Object> error = new HashMap<>();
+        error.put("videos", new ArrayList<>());
+        error.put("nextPageToken", null);
+        error.put("error", e.getMessage());
+        return org.springframework.http.ResponseEntity.internalServerError().body(error);
+    }
+}
+
+// ==================== User History & Personalization APIs ====================
+
+/**
+ * API endpoint to save search history
+ */
+@PostMapping("/api/history/search")
+@ResponseBody
+public ResponseEntity<Map<String, Object>> saveSearchHistory(
+        @RequestBody Map<String, String> request,
+        Principal principal) {
+    Map<String, Object> response = new HashMap<>();
+    try {
+        String username = principal != null ? principal.getName() : "guest";
+        String query = request.get("query");
+        
+        if (query != null && !query.trim().isEmpty()) {
+            userHistoryService.saveSearchHistory(username, query);
+            response.put("success", true);
+            response.put("message", "Search history saved");
+        } else {
+            response.put("success", false);
+            response.put("message", "Query is empty");
+        }
+        return ResponseEntity.ok(response);
+    } catch (Exception e) {
+        e.printStackTrace();
+        response.put("success", false);
+        response.put("error", e.getMessage());
+        return ResponseEntity.internalServerError().body(response);
+    }
+}
+
+/**
+ * API endpoint to save watch history
+ */
+@PostMapping("/api/history/watch")
+@ResponseBody
+public ResponseEntity<Map<String, Object>> saveWatchHistory(
+        @RequestBody Map<String, String> request,
+        Principal principal) {
+    Map<String, Object> response = new HashMap<>();
+    try {
+        String username = principal != null ? principal.getName() : "guest";
+        String videoId = request.get("videoId");
+        String videoTitle = request.get("videoTitle");
+        String channelTitle = request.get("channelTitle");
+        String thumbnailUrl = request.get("thumbnailUrl");
+        String category = request.get("category");
+        
+        if (videoId != null && !videoId.trim().isEmpty()) {
+            userHistoryService.saveWatchHistory(username, videoId, videoTitle, channelTitle, thumbnailUrl, category);
+            response.put("success", true);
+            response.put("message", "Watch history saved");
+        } else {
+            response.put("success", false);
+            response.put("message", "Video ID is empty");
+        }
+        return ResponseEntity.ok(response);
+    } catch (Exception e) {
+        e.printStackTrace();
+        response.put("success", false);
+        response.put("error", e.getMessage());
+        return ResponseEntity.internalServerError().body(response);
+    }
+}
+
+/**
+ * API endpoint to get personalized video recommendations
+ */
+@GetMapping("/api/videos/personalized")
+@ResponseBody
+public ResponseEntity<Map<String, Object>> getPersonalizedVideos(
+        @RequestParam(defaultValue = "20") int maxResults,
+        Principal principal) {
+    Map<String, Object> response = new HashMap<>();
+    try {
+        String username = principal != null ? principal.getName() : "guest";
+        
+        // Check if user has enough history for personalization
+        if (userHistoryService.hasEnoughHistory(username)) {
+            List<Map<String, String>> videos = userHistoryService.getPersonalizedRecommendations(username, maxResults);
+            response.put("videos", videos);
+            response.put("personalized", true);
+            response.put("message", "Personalized recommendations based on your history");
+        } else {
+            // Return trending videos if not enough history
+            List<Map<String, String>> videos = youtubeservice.getTrendingVideos("IN", maxResults);
+            response.put("videos", videos);
+            response.put("personalized", false);
+            response.put("message", "Showing trending videos. Watch more to get personalized recommendations!");
+        }
+        response.put("nextPageToken", null); // Personalized doesn't support pagination yet
+        return ResponseEntity.ok(response);
+    } catch (Exception e) {
+        e.printStackTrace();
+        response.put("videos", new ArrayList<>());
+        response.put("error", e.getMessage());
+        return ResponseEntity.internalServerError().body(response);
+    }
+}
+
+/**
+ * API endpoint to get user's recent search history
+ */
+@GetMapping("/api/history/searches")
+@ResponseBody
+public ResponseEntity<Map<String, Object>> getRecentSearches(
+        @RequestParam(defaultValue = "10") int limit,
+        Principal principal) {
+    Map<String, Object> response = new HashMap<>();
+    try {
+        String username = principal != null ? principal.getName() : "guest";
+        List<String> searches = userHistoryService.getRecentSearches(username, limit);
+        response.put("searches", searches);
+        response.put("success", true);
+        return ResponseEntity.ok(response);
+    } catch (Exception e) {
+        e.printStackTrace();
+        response.put("searches", new ArrayList<>());
+        response.put("error", e.getMessage());
+        return ResponseEntity.internalServerError().body(response);
+    }
+}
+
+/**
+ * API endpoint to get user's interest profile
+ */
+@GetMapping("/api/history/profile")
+@ResponseBody
+public ResponseEntity<Map<String, Object>> getUserProfile(Principal principal) {
+    try {
+        String username = principal != null ? principal.getName() : "guest";
+        Map<String, Object> profile = userHistoryService.getUserInterestProfile(username);
+        profile.put("success", true);
+        return ResponseEntity.ok(profile);
+    } catch (Exception e) {
+        e.printStackTrace();
+        Map<String, Object> error = new HashMap<>();
+        error.put("success", false);
+        error.put("error", e.getMessage());
+        return ResponseEntity.internalServerError().body(error);
+    }
+}
+
+/**
+ * API endpoint to clear user history
+ */
+@PostMapping("/api/history/clear")
+@ResponseBody
+public ResponseEntity<Map<String, Object>> clearHistory(
+        @RequestBody Map<String, String> request,
+        Principal principal) {
+    Map<String, Object> response = new HashMap<>();
+    try {
+        String username = principal != null ? principal.getName() : "guest";
+        String type = request.get("type"); // "search", "watch", or "all"
+        
+        if ("search".equals(type) || "all".equals(type)) {
+            userHistoryService.clearSearchHistory(username);
+        }
+        if ("watch".equals(type) || "all".equals(type)) {
+            userHistoryService.clearWatchHistory(username);
+        }
+        
+        response.put("success", true);
+        response.put("message", "History cleared");
+        return ResponseEntity.ok(response);
+    } catch (Exception e) {
+        e.printStackTrace();
+        response.put("success", false);
+        response.put("error", e.getMessage());
+        return ResponseEntity.internalServerError().body(response);
     }
 }
 
