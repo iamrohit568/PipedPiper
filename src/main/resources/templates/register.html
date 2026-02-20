@@ -1,22 +1,46 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register | Piped Piper</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>tailwind.config = { darkMode: 'class' }</script>
+    <script>
+        if (localStorage.getItem('theme') === 'dark' ||
+            (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             background-color: #f8fafc;
             color: #1e293b;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
+
+        .dark body,
+        :is(.dark body) {
+            background-color: #0f172a;
+            color: #e2e8f0;
+        }
+
         .card {
             background: white;
             border-radius: 12px;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            transition: all 0.3s ease;
         }
+
+        .dark .card {
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
         .btn-primary {
             background-color: #4f46e5;
             color: white;
@@ -28,20 +52,67 @@
             border-radius: 8px;
             transition: all 0.2s ease;
         }
+
         .btn-primary:hover {
             background-color: #4338ca;
         }
+
         .form-input {
             width: 100%;
             padding: 0.75rem 1rem;
             border: 1px solid #e2e8f0;
             border-radius: 8px;
-            transition: border-color 0.2s ease;
+            transition: all 0.3s ease;
+            background: white;
+            color: #1e293b;
         }
+
+        .dark .form-input {
+            background: #1e293b;
+            border-color: rgba(99, 102, 241, 0.3);
+            color: #e2e8f0;
+        }
+
+        .dark .form-input::placeholder {
+            color: #64748b;
+        }
+
         .form-input:focus {
             outline: none;
             border-color: #c7d2fe;
             box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .dark .form-input:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+        }
+
+        .theme-toggle {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            color: #475569;
+        }
+
+        .dark .theme-toggle {
+            background: rgba(99, 102, 241, 0.1);
+            border-color: rgba(99, 102, 241, 0.3);
+            color: #fbbf24;
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.05);
         }
     </style>
 </head>
@@ -58,46 +129,65 @@
 "></div>
 
 
-<body class="min-h-screen flex items-center justify-center px-4">
+<body class="min-h-screen flex items-center justify-center px-4 relative">
+    <button onclick="toggleTheme()" class="theme-toggle" title="Toggle dark/light mode" id="themeToggle">
+        <i class="fas fa-moon" id="themeIcon"></i>
+    </button>
     <div class="card p-8 w-full max-w-md">
         <div class="text-center mb-8">
             <div class="w-16 h-16 bg-indigo-600 rounded-lg flex items-center justify-center mx-auto mb-4">
                 <i class="fab fa-youtube text-white text-2xl"></i>
             </div>
-            <h1 class="text-2xl font-bold text-gray-900 mb-2">Create an account</h1>
-            <p class="text-gray-600">Join Piped Piper today</p>
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">Create an account</h1>
+            <p class="text-gray-600 dark:text-gray-400">Join Piped Piper today</p>
         </div>
 
         <form th:action="@{/register}" method="post" class="space-y-6">
-    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-    
-    <div>
-        <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-        <input type="text" id="name" name="name" required class="form-input">
-    </div>
-            
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
             <div>
-                <label for="username" class="block text-sm font-medium text-gray-700 mb-1">Username</label>
-                <input type="text" id="username" name="username" required 
-                       class="form-input" placeholder="Choose a username">
+                <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Full
+                    Name</label>
+                <input type="text" id="name" name="name" required class="form-input">
             </div>
-            
+
             <div>
-                <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                <input type="password" id="password" name="password" required 
-                       class="form-input" placeholder="Create a password">
+                <label for="username"
+                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Username</label>
+                <input type="text" id="username" name="username" required class="form-input"
+                    placeholder="Choose a username">
             </div>
-            
+
+            <div>
+                <label for="password"
+                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
+                <input type="password" id="password" name="password" required class="form-input"
+                    placeholder="Create a password">
+            </div>
+
             <button type="submit" class="btn-primary w-full">
                 <i class="fas fa-user-plus mr-2"></i>Register
             </button>
         </form>
-        
+
         <div class="mt-6 text-center">
-            <p class="text-gray-600">Already have an account? 
-                <a href="/login" class="text-indigo-600 hover:text-indigo-800">Sign in</a>
+            <p class="text-gray-600 dark:text-gray-400">Already have an account?
+                <a href="/login" class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800">Sign in</a>
             </p>
         </div>
     </div>
+    <script>
+        function toggleTheme() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            updateThemeIcon();
+        }
+        function updateThemeIcon() {
+            const icon = document.getElementById('themeIcon');
+            if (icon) icon.className = document.documentElement.classList.contains('dark') ? 'fas fa-sun' : 'fas fa-moon';
+        }
+        document.addEventListener('DOMContentLoaded', updateThemeIcon);
+    </script>
 </body>
+
 </html>

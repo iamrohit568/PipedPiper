@@ -13,27 +13,45 @@
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Error | TubeMetrics</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>tailwind.config = { darkMode: 'class' }</script>
+    <script>
+        if (localStorage.getItem('theme') === 'dark' ||
+            (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         .error-card {
             max-width: 28rem;
             background: white;
             box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .dark .error-card {
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
         }
     </style>
 </head>
-<body class="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+
+<body
+    class="min-h-screen bg-gray-50 dark:bg-slate-950 flex items-center justify-center px-4 transition-colors duration-300">
     <div class="error-card rounded-xl p-8 text-center">
         <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <i class="fas fa-exclamation-triangle text-red-500 text-2xl"></i>
         </div>
-        <h1 class="text-2xl font-bold text-gray-900 mb-3">Oops! Something went wrong</h1>
-        <p class="text-gray-600 mb-6">We couldn't process your request. Please check the URL and try again.</p>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-3">Oops! Something went wrong</h1>
+        <p class="text-gray-600 dark:text-gray-400 mb-6">We couldn't process your request. Please check the URL and try
+            again.</p>
         <div class="flex flex-col sm:flex-row justify-center gap-3">
             <a href="javascript:history.back()" class="btn btn-secondary">
                 <i class="fas fa-arrow-left mr-2"></i>Go Back
@@ -44,4 +62,5 @@
         </div>
     </div>
 </body>
+
 </html>

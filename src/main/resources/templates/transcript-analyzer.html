@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Video Insights | Piped Piper</title>
+    <meta name="description"
+        content="Summarize YouTube videos instantly with AI. Get structured insights, key takeaways, and chat with video content.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>tailwind.config = { darkMode: 'class' }</script>
+    <!-- Apply dark mode immediately to prevent flash -->
+    <script>
+        if (localStorage.getItem('theme') === 'dark' ||
+            (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .dark body,
+        :is(.dark body) {
+            background-color: #0f172a;
+            color: #e2e8f0;
+        }
+
+        /* Cards */
+        .card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s ease;
+        }
+
+        .dark .card {
+            background: rgba(30, 41, 59, 0.8);
+            border-color: rgba(99, 102, 241, 0.2);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+        }
+
+        .card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .dark .card:hover {
+            box-shadow: 0 4px 16px rgba(99, 102, 241, 0.15);
+            border-color: rgba(99, 102, 241, 0.35);
+        }
+
+        /* Input */
+        .input-styled {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            color: #1e293b;
+            transition: all 0.3s ease;
+        }
+
+        .dark .input-styled {
+            background: #1e293b;
+            border-color: rgba(99, 102, 241, 0.3);
+            color: #e2e8f0;
+        }
+
+        .input-styled:focus {
+            outline: none;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .input-styled::placeholder {
+            color: #94a3b8;
+        }
+
+        /* Primary button */
+        .btn-primary {
+            background: linear-gradient(135deg, #4f46e5, #6366f1);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-ghost {
+            background: #f1f5f9;
+            color: #475569;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .dark .btn-ghost {
+            background: rgba(99, 102, 241, 0.1);
+            color: #a5b4fc;
+            border-color: rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-ghost:hover {
+            background: #e2e8f0;
+            color: #1e293b;
+        }
+
+        .dark .btn-ghost:hover {
+            background: rgba(99, 102, 241, 0.2);
+            color: #c7d2fe;
+        }
+
+        /* Summary content */
+        .summary-content h2 {
+            color: #4f46e5;
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .dark .summary-content h2 {
+            color: #a5b4fc;
+            border-bottom-color: rgba(99, 102, 241, 0.2);
+        }
+
+        .summary-content h2:first-child {
+            margin-top: 0;
+        }
+
+        .summary-content p {
+            color: #475569;
+            line-height: 1.75;
+            margin-bottom: 0.75rem;
+        }
+
+        .dark .summary-content p {
+            color: #cbd5e1;
+        }
+
+        .summary-content ul {
+            list-style: none;
+            padding: 0;
+            margin-bottom: 1rem;
+        }
+
+        .summary-content ul li {
+            padding: 0.5rem 0 0.5rem 1.5rem;
+            position: relative;
+            color: #475569;
+            line-height: 1.65;
+        }
+
+        .dark .summary-content ul li {
+            color: #cbd5e1;
+        }
+
+        .summary-content ul li::before {
+            content: '▸';
+            position: absolute;
+            left: 0;
+            color: #6366f1;
+            font-weight: bold;
+        }
+
+        .summary-content ol {
+            padding-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .summary-content ol li {
+            color: #475569;
+            padding: 0.25rem 0;
+            line-height: 1.65;
+        }
+
+        .dark .summary-content ol li {
+            color: #cbd5e1;
+        }
+
+        .summary-content strong {
+            color: #1e293b;
+            font-weight: 600;
+        }
+
+        .dark .summary-content strong {
+            color: #e2e8f0;
+        }
+
+        .summary-content code {
+            background: #eef2ff;
+            color: #4338ca;
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+
+        .dark .summary-content code {
+            background: rgba(99, 102, 241, 0.15);
+            color: #c7d2fe;
+        }
+
+        .summary-content pre {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 10px;
+            padding: 1rem;
+            overflow-x: auto;
+            margin-bottom: 1rem;
+        }
+
+        .summary-content pre code {
+            background: none;
+            padding: 0;
+            color: #e2e8f0;
+        }
+
+        /* Chat */
+        .chat-container {
+            max-height: 450px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #c7d2fe transparent;
+        }
+
+        .chat-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .chat-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .chat-container::-webkit-scrollbar-thumb {
+            background: #c7d2fe;
+            border-radius: 3px;
+        }
+
+        .chat-bubble-user {
+            background: linear-gradient(135deg, #4f46e5, #6366f1);
+            color: white;
+            border-radius: 16px 16px 4px 16px;
+            max-width: 80%;
+        }
+
+        .chat-bubble-ai {
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            color: #1e293b;
+            border-radius: 16px 16px 16px 4px;
+            max-width: 85%;
+        }
+
+        .dark .chat-bubble-ai {
+            background: rgba(30, 41, 59, 0.8);
+            border-color: rgba(99, 102, 241, 0.2);
+            color: #e2e8f0;
+        }
+
+        .chat-bubble-ai p {
+            color: #475569;
+            margin-bottom: 0.5rem;
+        }
+
+        .dark .chat-bubble-ai p {
+            color: #cbd5e1;
+        }
+
+        .chat-bubble-ai p:last-child {
+            margin-bottom: 0;
+        }
+
+        .chat-bubble-ai strong {
+            color: #1e293b;
+        }
+
+        .dark .chat-bubble-ai strong {
+            color: #e2e8f0;
+        }
+
+        .chat-bubble-ai code {
+            background: #eef2ff;
+            color: #4338ca;
+            padding: 0.1rem 0.3rem;
+            border-radius: 3px;
+            font-size: 0.9em;
+        }
+
+        .dark .chat-bubble-ai code {
+            background: rgba(99, 102, 241, 0.15);
+            color: #c7d2fe;
+        }
+
+        .chat-bubble-ai ul {
+            list-style: disc;
+            padding-left: 1.25rem;
+        }
+
+        .chat-bubble-ai li {
+            color: #475569;
+            padding: 0.15rem 0;
+        }
+
+        .dark .chat-bubble-ai li {
+            color: #cbd5e1;
+        }
+
+        .transcript-content {
+            max-height: 300px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #c7d2fe transparent;
+        }
+
+        /* Loading dots */
+        .loading-dots span {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #6366f1;
+            margin: 0 3px;
+            animation: dot-bounce 1.4s infinite ease-in-out both;
+        }
+
+        .loading-dots span:nth-child(1) {
+            animation-delay: -0.32s;
+        }
+
+        .loading-dots span:nth-child(2) {
+            animation-delay: -0.16s;
+        }
+
+        @keyframes dot-bounce {
+
+            0%,
+            80%,
+            100% {
+                transform: scale(0);
+            }
+
+            40% {
+                transform: scale(1);
+            }
+        }
+
+        /* Error toast */
+        .error-toast {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 12px;
+        }
+
+        .dark .error-toast {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+
+        .copy-feedback {
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .copy-feedback.show {
+            opacity: 1;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(16px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: fadeInUp 0.4s ease forwards;
+        }
+
+        footer {
+            margin-top: auto;
+        }
+
+        /* Theme toggle button */
+        .theme-toggle {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            color: #475569;
+        }
+
+        .dark .theme-toggle {
+            background: rgba(99, 102, 241, 0.1);
+            border-color: rgba(99, 102, 241, 0.3);
+            color: #fbbf24;
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navbar -->
+    <nav
+        class="bg-white dark:bg-slate-900 shadow-sm dark:shadow-none dark:border-b dark:border-slate-800 sticky top-0 z-50 transition-colors duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a th:href="@{/}" class="flex items-center no-underline">
+                        <div class="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center">
+                            <i class="fab fa-youtube text-white text-lg"></i>
+                        </div>
+                        <h1 class="ml-3 text-xl font-semibold text-gray-900 dark:text-white">Piped Piper</h1>
+                    </a>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <a th:href="@{/}"
+                        class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-white transition-colors text-sm font-medium flex items-center">
+                        <i class="fas fa-home mr-1.5"></i> Home
+                    </a>
+                    <a th:href="@{/youtube-view}"
+                        class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-white transition-colors text-sm font-medium flex items-center">
+                        <i class="fas fa-play mr-1.5"></i> Watch
+                    </a>
+                    <span
+                        class="px-3 py-1.5 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-full text-sm font-medium">
+                        <i class="fas fa-brain mr-1"></i> AI Insights
+                    </span>
+                    <button onclick="toggleTheme()" class="theme-toggle" title="Toggle dark/light mode"
+                        id="themeToggle">
+                        <i class="fas fa-moon" id="themeIcon"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="flex-grow max-w-5xl mx-auto py-8 px-4 sm:px-6 w-full">
+
+        <!-- Header -->
+        <div class="text-center mb-8 fade-in">
+            <div
+                class="inline-flex items-center px-4 py-1.5 rounded-full bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 text-indigo-600 dark:text-indigo-400 text-sm font-medium mb-4">
+                <i class="fas fa-sparkles mr-2"></i> AI-Powered Analysis
+            </div>
+            <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-3">
+                Video <span
+                    class="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Insights</span>
+            </h1>
+            <p class="text-gray-500 dark:text-gray-400 max-w-lg mx-auto">
+                Paste any YouTube link and get a comprehensive AI summary — no need to watch the full video.
+            </p>
+        </div>
+
+        <!-- Error Display -->
+        <div th:if="${errorTitle != null}" class="error-toast p-4 mb-6 fade-in">
+            <div class="flex items-start space-x-3">
+                <i class="fas fa-exclamation-circle text-red-500 mt-0.5"></i>
+                <div>
+                    <h3 class="text-red-700 dark:text-red-400 font-semibold" th:text="${errorTitle}"></h3>
+                    <p class="text-red-500 dark:text-red-400/80 text-sm mt-1" th:text="${errorMessage}"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Input Section -->
+        <div class="card p-6 mb-6 fade-in" style="animation-delay: 0.1s;">
+            <form th:action="@{/transcript/analyze}" method="post" id="analyzeForm" onsubmit="return handleSubmit()">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <div class="relative flex-grow">
+                        <input type="text" id="videoUrl" name="videoUrl" th:value="${videoUrl}"
+                            placeholder="Paste YouTube URL here (e.g., https://www.youtube.com/watch?v=...)"
+                            class="input-styled w-full py-3.5 px-4 pr-12 text-base" required>
+                        <div class="absolute right-4 top-1/2 -translate-y-1/2">
+                            <i class="fab fa-youtube text-red-400"></i>
+                        </div>
+                    </div>
+                    <button type="submit" id="analyzeBtn"
+                        class="btn-primary px-6 py-3.5 text-base flex items-center justify-center whitespace-nowrap min-w-[160px]">
+                        <span id="btnText"><i class="fas fa-bolt mr-2"></i>Analyze</span>
+                        <span id="btnLoading" class="hidden">
+                            <div class="loading-dots"><span></span><span></span><span></span></div>
+                        </span>
+                    </button>
+                </div>
+                <p class="text-gray-400 dark:text-gray-500 text-xs mt-2 ml-1">Works with any YouTube video that has
+                    captions / auto-generated subtitles</p>
+            </form>
+        </div>
+
+        <!-- Results Section -->
+        <div th:if="${analyzed}" class="space-y-6 fade-in" style="animation-delay: 0.2s;">
+
+            <!-- Video Info Card -->
+            <div class="card p-5">
+                <div class="flex flex-col sm:flex-row items-start gap-4">
+                    <div class="w-full sm:w-48 flex-shrink-0">
+                        <img th:src="'https://img.youtube.com/vi/' + ${videoId} + '/hqdefault.jpg'"
+                            alt="Video thumbnail"
+                            class="w-full rounded-lg border border-gray-200 dark:border-slate-700">
+                    </div>
+                    <div class="flex-grow">
+                        <h2 class="text-lg font-bold text-gray-900 dark:text-white mb-2" th:text="${videoTitle}"></h2>
+                        <div class="flex flex-wrap items-center gap-3 text-sm">
+                            <span class="text-gray-500 dark:text-gray-400">
+                                <i class="fas fa-file-alt mr-1"></i>
+                                <span th:text="${transcriptLength}"></span> characters
+                            </span>
+                            <span th:if="${cached}" class="text-emerald-600 dark:text-emerald-400 font-medium">
+                                <i class="fas fa-bolt mr-1"></i> Cached (instant)
+                            </span>
+                            <a th:href="'https://www.youtube.com/watch?v=' + ${videoId}" target="_blank"
+                                class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium transition-colors">
+                                <i class="fas fa-external-link-alt mr-1"></i> Watch on YouTube
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Summary Card -->
+            <div class="card p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xl font-bold text-gray-900 dark:text-white flex items-center">
+                        <i class="fas fa-brain text-indigo-600 dark:text-indigo-400 mr-2"></i> AI Summary
+                    </h2>
+                    <button onclick="copySummary()" class="btn-ghost px-3 py-1.5 text-xs">
+                        <i class="fas fa-copy mr-1"></i> Copy
+                        <span id="copyFeedback" class="copy-feedback ml-1 text-emerald-600">✓</span>
+                    </button>
+                </div>
+                <div id="summaryContent" class="summary-content" th:utext="${summary}">
+                </div>
+            </div>
+
+            <!-- Full Transcript (Collapsible) -->
+            <div class="card overflow-hidden">
+                <button onclick="toggleTranscript()"
+                    class="w-full flex items-center justify-between p-5 text-left hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
+                    <span class="text-gray-900 dark:text-white font-semibold flex items-center">
+                        <i class="fas fa-scroll text-indigo-600 dark:text-indigo-400 mr-2"></i> Full Transcript
+                    </span>
+                    <i id="transcriptArrow"
+                        class="fas fa-chevron-down text-gray-400 transition-transform duration-300"></i>
+                </button>
+                <div id="transcriptBody" class="hidden px-5 pb-5">
+                    <div class="flex justify-end mb-3">
+                        <button onclick="copyTranscript()" class="btn-ghost px-3 py-1.5 text-xs">
+                            <i class="fas fa-copy mr-1"></i> Copy Transcript
+                        </button>
+                    </div>
+                    <div class="transcript-content">
+                        <pre id="transcriptText"
+                            class="text-gray-600 dark:text-gray-300 text-sm whitespace-pre-wrap leading-relaxed bg-gray-50 dark:bg-slate-800 p-4 rounded-lg border border-gray-100 dark:border-slate-700"
+                            th:text="${transcript}"></pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Section -->
+            <div class="card p-6">
+                <h2 class="text-xl font-bold text-gray-900 dark:text-white flex items-center mb-1">
+                    <i class="fas fa-comments text-purple-600 dark:text-purple-400 mr-2"></i> Chat with Video
+                </h2>
+                <p class="text-gray-500 dark:text-gray-400 text-sm mb-4">Ask questions about the video content and get
+                    AI-powered answers</p>
+
+                <div id="chatContainer"
+                    class="chat-container mb-4 p-4 rounded-xl bg-gray-50 dark:bg-slate-800/50 border border-gray-100 dark:border-slate-700 min-h-[100px]">
+                    <div id="chatMessages" class="space-y-3">
+                        <div class="flex justify-start">
+                            <div class="chat-bubble-ai px-4 py-3">
+                                <p class="text-sm">👋 Hi! I've analyzed this video. Ask me anything about its content —
+                                    key points, details, or anything you're curious about!</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex gap-2">
+                    <input type="text" id="chatInput" placeholder="Ask a question about the video..."
+                        class="input-styled flex-grow py-3 px-4 text-sm" onkeypress="if(event.key==='Enter')sendChat()">
+                    <button id="chatBtn" onclick="sendChat()" class="btn-primary px-5 py-3 text-sm">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer
+        class="bg-white dark:bg-slate-900 border-t dark:border-slate-800 mt-12 py-8 px-6 sm:px-8 transition-colors duration-300">
+        <div class="max-w-7xl mx-auto">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="flex items-center space-x-3 mb-4 md:mb-0">
+                    <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
+                        <i class="fab fa-youtube text-white text-sm"></i>
+                    </div>
+                    <span class="text-gray-900 dark:text-white font-medium">Piped Piper</span>
+                </div>
+                <div class="flex space-x-6">
+                    <a href="#" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">Terms</a>
+                    <a href="#" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">Privacy</a>
+                    <a href="#" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">Contact</a>
+                </div>
+            </div>
+            <div class="mt-6 text-center md:text-left text-sm text-gray-500">
+                &copy; 2025 Piped Piper. All rights reserved.
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // ====================
+        // THEME TOGGLE
+        // ====================
+        function toggleTheme() {
+            const html = document.documentElement;
+            const isDark = html.classList.toggle('dark');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            updateThemeIcon();
+        }
+
+        function updateThemeIcon() {
+            const icon = document.getElementById('themeIcon');
+            if (icon) {
+                const isDark = document.documentElement.classList.contains('dark');
+                icon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+            }
+        }
+
+        // Set icon on load
+        document.addEventListener('DOMContentLoaded', updateThemeIcon);
+
+        // ====================
+        // STATE
+        // ====================
+        const chatHistory = [];
+        const videoId = '[[${videoId}]]' !== '' ? '[[${videoId}]]' : null;
+
+        // ====================
+        // FORM SUBMIT
+        // ====================
+        function handleSubmit() {
+            const url = document.getElementById('videoUrl').value.trim();
+            if (!url) return false;
+            if (!url.includes('youtube.com') && !url.includes('youtu.be')) {
+                showError('Please enter a valid YouTube URL.');
+                return false;
+            }
+            const btn = document.getElementById('analyzeBtn');
+            document.getElementById('btnText').classList.add('hidden');
+            document.getElementById('btnLoading').classList.remove('hidden');
+            btn.disabled = true;
+            return true;
+        }
+
+        // ====================
+        // CHAT
+        // ====================
+        async function sendChat() {
+            const input = document.getElementById('chatInput');
+            const question = input.value.trim();
+            if (!question || !videoId) return;
+
+            const chatBtn = document.getElementById('chatBtn');
+            chatBtn.disabled = true;
+            input.disabled = true;
+            addChatMessage(question, 'user');
+            chatHistory.push({ role: 'user', content: question });
+            input.value = '';
+            const loadingId = addLoadingMessage();
+
+            try {
+                const csrfToken = document.querySelector('input[name="_csrf"]')?.value || '';
+                const response = await fetch('/api/transcript/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken },
+                    body: JSON.stringify({ videoId, question, chatHistory: chatHistory.slice(-10) })
+                });
+                removeLoadingMessage(loadingId);
+                const data = await response.json();
+                if (data.error) {
+                    addChatMessage('⚠️ ' + data.message, 'ai');
+                } else {
+                    addChatMessage(data.answer, 'ai');
+                    chatHistory.push({ role: 'assistant', content: data.answer });
+                }
+            } catch (err) {
+                removeLoadingMessage(loadingId);
+                addChatMessage('⚠️ Failed to get a response. Please try again.', 'ai');
+            }
+            chatBtn.disabled = false;
+            input.disabled = false;
+            input.focus();
+        }
+
+        function addChatMessage(content, role) {
+            const container = document.getElementById('chatMessages');
+            const wrapper = document.createElement('div');
+            wrapper.className = `flex ${role === 'user' ? 'justify-end' : 'justify-start'} fade-in`;
+            const bubble = document.createElement('div');
+            bubble.className = role === 'user' ? 'chat-bubble-user px-4 py-3' : 'chat-bubble-ai px-4 py-3';
+            if (role === 'ai' && typeof marked !== 'undefined') {
+                bubble.innerHTML = marked.parse(content);
+            } else {
+                bubble.innerHTML = `<p class="text-sm">${escapeHtml(content)}</p>`;
+            }
+            wrapper.appendChild(bubble);
+            container.appendChild(wrapper);
+            scrollChatToBottom();
+        }
+
+        function addLoadingMessage() {
+            const container = document.getElementById('chatMessages');
+            const id = 'loading-' + Date.now();
+            const wrapper = document.createElement('div');
+            wrapper.id = id;
+            wrapper.className = 'flex justify-start fade-in';
+            wrapper.innerHTML = `<div class="chat-bubble-ai px-4 py-3"><div class="loading-dots"><span></span><span></span><span></span></div></div>`;
+            container.appendChild(wrapper);
+            scrollChatToBottom();
+            return id;
+        }
+
+        function removeLoadingMessage(id) { const el = document.getElementById(id); if (el) el.remove(); }
+        function scrollChatToBottom() { const c = document.getElementById('chatContainer'); setTimeout(() => { c.scrollTop = c.scrollHeight; }, 100); }
+
+        function copySummary() {
+            navigator.clipboard.writeText(document.getElementById('summaryContent').innerText).then(() => showCopyFeedback('copyFeedback'));
+        }
+        function copyTranscript() {
+            navigator.clipboard.writeText(document.getElementById('transcriptText').innerText).then(() => alert('Transcript copied!'));
+        }
+        function showCopyFeedback(id) {
+            const el = document.getElementById(id);
+            el.classList.add('show');
+            setTimeout(() => el.classList.remove('show'), 2000);
+        }
+
+        function toggleTranscript() {
+            const body = document.getElementById('transcriptBody');
+            const arrow = document.getElementById('transcriptArrow');
+            body.classList.toggle('hidden');
+            arrow.style.transform = body.classList.contains('hidden') ? '' : 'rotate(180deg)';
+        }
+
+        function escapeHtml(text) { const d = document.createElement('div'); d.textContent = text; return d.innerHTML; }
+        function showError(msg) { alert(msg); }
+
+        // Render summary as markdown
+        document.addEventListener('DOMContentLoaded', function () {
+            const el = document.getElementById('summaryContent');
+            if (el && typeof marked !== 'undefined') {
+                const rawText = el.textContent || el.innerText;
+                if (rawText && rawText.trim().length > 0) el.innerHTML = marked.parse(rawText);
+            }
+        });
+    </script>
+</body>
+
+</html>

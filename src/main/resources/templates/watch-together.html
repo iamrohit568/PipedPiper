@@ -1,10 +1,18 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Watch Together - Room <span th:text="${roomId}"></span> | Piped Piper</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>tailwind.config = { darkMode: 'class' }</script>
+    <script>
+        if (localStorage.getItem('theme') === 'dark' ||
+            (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- SockJS and STOMP for WebSocket -->
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
@@ -13,36 +21,77 @@
         .video-container {
             aspect-ratio: 16 / 9;
         }
+
         .chat-messages {
             height: 400px;
             overflow-y: auto;
         }
+
         .video-card:hover {
             transform: scale(1.02);
         }
+
         .participant-dot {
             animation: pulse 2s infinite;
         }
+
         @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
         }
+
         .sidebar-scroll {
             max-height: calc(100vh - 200px);
             overflow-y: auto;
         }
+
         .sidebar-scroll::-webkit-scrollbar {
             width: 6px;
         }
+
         .sidebar-scroll::-webkit-scrollbar-thumb {
             background-color: #c7d2fe;
             border-radius: 3px;
         }
+
+        .theme-toggle {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            color: #475569;
+            font-size: 0.75rem;
+        }
+
+        .dark .theme-toggle {
+            background: rgba(99, 102, 241, 0.1);
+            border-color: rgba(99, 102, 241, 0.3);
+            color: #fbbf24;
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.05);
+        }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen">
+
+<body class="bg-gray-100 dark:bg-slate-950 min-h-screen transition-colors duration-300">
     <!-- Navigation -->
-    <nav class="bg-white shadow-sm sticky top-0 z-50">
+    <nav
+        class="bg-white dark:bg-slate-900/90 shadow-sm dark:shadow-none dark:border-b dark:border-gray-800 sticky top-0 z-50 transition-colors duration-300">
         <div class="max-w-full mx-auto px-4">
             <div class="flex justify-between h-14">
                 <div class="flex items-center">
@@ -50,29 +99,34 @@
                         <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
                             <i class="fab fa-youtube text-white text-sm"></i>
                         </div>
-                        <span class="ml-2 font-semibold text-gray-900">Watch Together</span>
+                        <span class="ml-2 font-semibold text-gray-900 dark:text-white">Watch Together</span>
                     </a>
                 </div>
-                
+
                 <div class="flex items-center space-x-4">
                     <!-- Room Info -->
-                    <div class="flex items-center bg-indigo-100 px-4 py-2 rounded-lg">
-                        <span class="text-indigo-800 font-medium">Room:</span>
-                        <span id="roomIdDisplay" th:text="${roomId}" class="ml-2 font-bold text-indigo-600"></span>
-                        <button onclick="copyRoomLink()" class="ml-2 text-indigo-600 hover:text-indigo-800" title="Copy room link">
+                    <div class="flex items-center bg-indigo-100 dark:bg-indigo-900/30 px-4 py-2 rounded-lg">
+                        <span class="text-indigo-800 dark:text-indigo-300 font-medium">Room:</span>
+                        <span id="roomIdDisplay" th:text="${roomId}"
+                            class="ml-2 font-bold text-indigo-600 dark:text-indigo-400"></span>
+                        <button onclick="copyRoomLink()" class="ml-2 text-indigo-600 hover:text-indigo-800"
+                            title="Copy room link">
                             <i class="fas fa-copy"></i>
                         </button>
                     </div>
-                    
+
                     <!-- Participants Count -->
-                    <div class="flex items-center bg-green-100 px-3 py-2 rounded-lg">
+                    <div class="flex items-center bg-green-100 dark:bg-green-900/30 px-3 py-2 rounded-lg">
                         <span class="participant-dot w-2 h-2 bg-green-500 rounded-full mr-2"></span>
-                        <span id="participantCount" class="text-green-800 font-medium">1</span>
-                        <span class="text-green-600 ml-1">online</span>
+                        <span id="participantCount" class="text-green-800 dark:text-green-300 font-medium">1</span>
+                        <span class="text-green-600 dark:text-green-400 ml-1">online</span>
                     </div>
-                    
+
                     <!-- Leave Room -->
-                    <a href="/watch-together" class="text-gray-600 hover:text-red-600">
+                    <button onclick="toggleTheme()" class="theme-toggle" id="themeToggle">
+                        <i class="fas fa-moon" id="themeIcon"></i>
+                    </button>
+                    <a href="/watch-together" class="text-gray-600 dark:text-gray-400 hover:text-red-600">
                         <i class="fas fa-sign-out-alt mr-1"></i> Leave
                     </a>
                 </div>
@@ -95,7 +149,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Video Title -->
                     <div class="mt-3 text-white">
                         <h2 id="currentVideoTitle" class="text-xl font-semibold">No video selected</h2>
@@ -105,17 +159,19 @@
             </div>
 
             <!-- Video List Section -->
-            <div id="videoListSection" class="flex-1 overflow-y-auto p-4 bg-gray-50">
+            <div id="videoListSection"
+                class="flex-1 overflow-y-auto p-4 bg-gray-50 dark:bg-slate-900 transition-colors duration-300">
                 <!-- Search Bar -->
                 <div class="max-w-5xl mx-auto mb-4">
                     <div class="flex gap-2">
                         <div class="flex-1 relative">
-                            <input type="text" id="searchInput" 
-                                   placeholder="Search YouTube videos..."
-                                   class="w-full px-4 py-3 pl-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                            <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                            <input type="text" id="searchInput" placeholder="Search YouTube videos..."
+                                class="w-full px-4 py-3 pl-10 border border-gray-300 dark:border-gray-700 dark:bg-slate-800 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <i
+                                class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
                         </div>
-                        <button onclick="searchVideos()" class="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition-colors">
+                        <button onclick="searchVideos()"
+                            class="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition-colors">
                             Search
                         </button>
                     </div>
@@ -124,25 +180,32 @@
                 <!-- Category Filter -->
                 <div class="max-w-5xl mx-auto mb-4">
                     <div class="flex flex-wrap gap-2">
-                        <button onclick="filterByCategory('all')" id="catAll" class="category-btn px-4 py-2 rounded-full text-sm font-medium bg-indigo-600 text-white">
+                        <button onclick="filterByCategory('all')" id="catAll"
+                            class="category-btn px-4 py-2 rounded-full text-sm font-medium bg-indigo-600 text-white">
                             All
                         </button>
-                        <button onclick="filterByCategory('10')" id="cat10" class="category-btn px-4 py-2 rounded-full text-sm font-medium bg-gray-200 text-gray-700 hover:bg-gray-300">
+                        <button onclick="filterByCategory('10')" id="cat10"
+                            class="category-btn px-4 py-2 rounded-full text-sm font-medium bg-gray-200 text-gray-700 hover:bg-gray-300">
                             <i class="fas fa-music mr-1"></i>Music
                         </button>
-                        <button onclick="filterByCategory('20')" id="cat20" class="category-btn px-4 py-2 rounded-full text-sm font-medium bg-gray-200 text-gray-700 hover:bg-gray-300">
+                        <button onclick="filterByCategory('20')" id="cat20"
+                            class="category-btn px-4 py-2 rounded-full text-sm font-medium bg-gray-200 text-gray-700 hover:bg-gray-300">
                             <i class="fas fa-gamepad mr-1"></i>Gaming
                         </button>
-                        <button onclick="filterByCategory('24')" id="cat24" class="category-btn px-4 py-2 rounded-full text-sm font-medium bg-gray-200 text-gray-700 hover:bg-gray-300">
+                        <button onclick="filterByCategory('24')" id="cat24"
+                            class="category-btn px-4 py-2 rounded-full text-sm font-medium bg-gray-200 text-gray-700 hover:bg-gray-300">
                             <i class="fas fa-film mr-1"></i>Entertainment
                         </button>
-                        <button onclick="filterByCategory('28')" id="cat28" class="category-btn px-4 py-2 rounded-full text-sm font-medium bg-gray-200 text-gray-700 hover:bg-gray-300">
+                        <button onclick="filterByCategory('28')" id="cat28"
+                            class="category-btn px-4 py-2 rounded-full text-sm font-medium bg-gray-200 text-gray-700 hover:bg-gray-300">
                             <i class="fas fa-flask mr-1"></i>Science & Tech
                         </button>
-                        <button onclick="filterByCategory('17')" id="cat17" class="category-btn px-4 py-2 rounded-full text-sm font-medium bg-gray-200 text-gray-700 hover:bg-gray-300">
+                        <button onclick="filterByCategory('17')" id="cat17"
+                            class="category-btn px-4 py-2 rounded-full text-sm font-medium bg-gray-200 text-gray-700 hover:bg-gray-300">
                             <i class="fas fa-futbol mr-1"></i>Sports
                         </button>
-                        <button onclick="filterByCategory('25')" id="cat25" class="category-btn px-4 py-2 rounded-full text-sm font-medium bg-gray-200 text-gray-700 hover:bg-gray-300">
+                        <button onclick="filterByCategory('25')" id="cat25"
+                            class="category-btn px-4 py-2 rounded-full text-sm font-medium bg-gray-200 text-gray-700 hover:bg-gray-300">
                             <i class="fas fa-newspaper mr-1"></i>News
                         </button>
                     </div>
@@ -157,14 +220,15 @@
                             <p class="mt-2 text-gray-600">Loading videos...</p>
                         </div>
                     </div>
-                    
+
                     <!-- Load More / Infinite Scroll Indicator -->
                     <div id="loadMoreContainer" class="text-center py-6 hidden">
                         <div id="loadingMore" class="hidden">
                             <i class="fas fa-spinner fa-spin text-2xl text-indigo-600"></i>
                             <p class="mt-2 text-gray-600">Loading more videos...</p>
                         </div>
-                        <button id="loadMoreBtn" onclick="loadMoreVideos()" class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition-colors hidden">
+                        <button id="loadMoreBtn" onclick="loadMoreVideos()"
+                            class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition-colors hidden">
                             Load More Videos
                         </button>
                     </div>
@@ -173,17 +237,18 @@
         </div>
 
         <!-- Chat Sidebar -->
-        <div class="w-80 bg-white border-l border-gray-200 flex flex-col">
+        <div
+            class="w-80 bg-white dark:bg-slate-900 border-l border-gray-200 dark:border-gray-800 flex flex-col transition-colors duration-300">
             <!-- Chat Header -->
-            <div class="p-4 border-b border-gray-200">
-                <h3 class="font-semibold text-gray-900">
+            <div class="p-4 border-b border-gray-200 dark:border-gray-800">
+                <h3 class="font-semibold text-gray-900 dark:text-white">
                     <i class="fas fa-comments text-indigo-600 mr-2"></i>Live Chat
                 </h3>
             </div>
 
             <!-- Participants List -->
-            <div class="p-3 border-b border-gray-200 bg-gray-50">
-                <h4 class="text-xs font-semibold text-gray-500 uppercase mb-2">In this room</h4>
+            <div class="p-3 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-slate-800">
+                <h4 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-2">In this room</h4>
                 <div id="participantsList" class="flex flex-wrap gap-2">
                     <!-- Participants will be added here -->
                 </div>
@@ -198,11 +263,10 @@
             </div>
 
             <!-- Chat Input -->
-            <div class="p-4 border-t border-gray-200">
+            <div class="p-4 border-t border-gray-200 dark:border-gray-800">
                 <form id="chatForm" class="flex gap-2">
-                    <input type="text" id="chatInput" 
-                           placeholder="Type a message..."
-                           class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <input type="text" id="chatInput" placeholder="Type a message..."
+                        class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-700 dark:bg-slate-800 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
                     <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700">
                         <i class="fas fa-paper-plane"></i>
                     </button>
@@ -212,7 +276,8 @@
     </div>
 
     <!-- Copy Link Toast -->
-    <div id="copyToast" class="fixed bottom-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg transform translate-y-20 opacity-0 transition-all duration-300">
+    <div id="copyToast"
+        class="fixed bottom-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg transform translate-y-20 opacity-0 transition-all duration-300">
         <i class="fas fa-check-circle mr-2"></i>Room link copied to clipboard!
     </div>
 
@@ -226,7 +291,7 @@
         const isHost = /*[[${isHost}]]*/ false;
         const initialVideoId = /*[[${initialVideoId}]]*/ '';
         const initialVideoTitle = /*[[${initialVideoTitle}]]*/ '';
-        
+
         let stompClient = null;
         let player = null;
         let isPlayerReady = false;
@@ -238,41 +303,41 @@
             const socket = new SockJS('/ws-watch-together');
             stompClient = Stomp.over(socket);
             stompClient.debug = null; // Disable debug logs
-            
-            stompClient.connect({}, function(frame) {
+
+            stompClient.connect({}, function (frame) {
                 console.log('Connected to WebSocket');
-                
+
                 // Subscribe to chat messages
-                stompClient.subscribe('/topic/chat/' + roomId, function(message) {
+                stompClient.subscribe('/topic/chat/' + roomId, function (message) {
                     const chatMessage = JSON.parse(message.body);
                     displayChatMessage(chatMessage);
                 });
-                
+
                 // Subscribe to room events (join/leave)
-                stompClient.subscribe('/topic/room/' + roomId, function(message) {
+                stompClient.subscribe('/topic/room/' + roomId, function (message) {
                     const roomMessage = JSON.parse(message.body);
                     handleRoomEvent(roomMessage);
                 });
-                
+
                 // Subscribe to video sync
-                stompClient.subscribe('/topic/sync/' + roomId, function(message) {
+                stompClient.subscribe('/topic/sync/' + roomId, function (message) {
                     const syncMessage = JSON.parse(message.body);
                     handleVideoSync(syncMessage);
                 });
-                
+
                 // Subscribe to personal sync response
-                stompClient.subscribe('/user/queue/sync-response', function(message) {
+                stompClient.subscribe('/user/queue/sync-response', function (message) {
                     const syncMessage = JSON.parse(message.body);
                     handleSyncResponse(syncMessage);
                 });
-                
+
                 // Announce joining
                 sendJoinMessage();
-                
+
                 // Request current video state
                 requestSync();
-                
-            }, function(error) {
+
+            }, function (error) {
                 console.error('WebSocket connection error:', error);
                 setTimeout(connectWebSocket, 5000); // Reconnect after 5 seconds
             });
@@ -297,11 +362,11 @@
         function displayChatMessage(message) {
             const chatContainer = document.getElementById('chatMessages');
             const messageDiv = document.createElement('div');
-            
+
             if (message.type === 'JOIN' || message.type === 'LEAVE') {
                 messageDiv.className = 'text-center text-sm';
                 messageDiv.innerHTML = `
-                    <span class="bg-gray-100 text-gray-600 px-3 py-1 rounded-full">
+                    <span class="bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-400 px-3 py-1 rounded-full">
                         <i class="fas fa-${message.type === 'JOIN' ? 'sign-in-alt' : 'sign-out-alt'} mr-1"></i>
                         ${message.sender} ${message.type === 'JOIN' ? 'joined' : 'left'} the room
                     </span>
@@ -316,7 +381,7 @@
                     </div>
                 `;
             }
-            
+
             chatContainer.appendChild(messageDiv);
             chatContainer.scrollTop = chatContainer.scrollHeight;
         }
@@ -335,7 +400,7 @@
 
         function sendVideoSync(action, currentTime = null) {
             if (isSyncing || !player || !currentVideoId) return;
-            
+
             const message = {
                 username: username,
                 videoId: currentVideoId,
@@ -343,7 +408,7 @@
                 isPlaying: player.getPlayerState() === YT.PlayerState.PLAYING,
                 action: action
             };
-            
+
             stompClient.send('/app/sync/' + roomId, {}, JSON.stringify(message));
         }
 
@@ -357,10 +422,10 @@
 
         function handleVideoSync(message) {
             if (message.username === username) return; // Ignore own messages
-            
+
             isSyncing = true;
-            
-            switch(message.action) {
+
+            switch (message.action) {
                 case 'PLAY':
                     if (player && isPlayerReady) {
                         player.seekTo(message.currentTime, true);
@@ -387,7 +452,7 @@
                     });
                     break;
             }
-            
+
             setTimeout(() => { isSyncing = false; }, 500);
         }
 
@@ -395,7 +460,7 @@
             if (message.videoId) {
                 isSyncing = true;
                 loadVideo(message.videoId, message.videoTitle, false);
-                
+
                 // Wait for player to be ready, then sync position
                 const checkReady = setInterval(() => {
                     if (player && isPlayerReady) {
@@ -430,7 +495,7 @@
         function onPlayerReady(event) {
             isPlayerReady = true;
             console.log('YouTube player ready');
-            
+
             // Load initial video if provided (from youtube-view page)
             if (initialVideoId && isHost) {
                 loadVideo(initialVideoId, initialVideoTitle, true);
@@ -439,8 +504,8 @@
 
         function onPlayerStateChange(event) {
             if (isSyncing) return;
-            
-            switch(event.data) {
+
+            switch (event.data) {
                 case YT.PlayerState.PLAYING:
                     sendVideoSync('PLAY');
                     break;
@@ -461,12 +526,12 @@
                 }, 100);
                 return;
             }
-            
+
             currentVideoId = videoId;
             player.loadVideoById(videoId);
             document.getElementById('currentVideoTitle').textContent = title;
             document.getElementById('noVideoOverlay').classList.add('hidden');
-            
+
             if (broadcast) {
                 sendVideoChange(videoId, title);
             }
@@ -483,11 +548,11 @@
         async function loadHomeVideos(append = false) {
             if (isLoadingVideos) return;
             isLoadingVideos = true;
-            
+
             const container = document.getElementById('videoGrid');
             const loadMoreContainer = document.getElementById('loadMoreContainer');
             const loadingMore = document.getElementById('loadingMore');
-            
+
             if (!append) {
                 container.innerHTML = `
                     <div class="col-span-full text-center py-8">
@@ -499,19 +564,19 @@
             } else {
                 loadingMore.classList.remove('hidden');
             }
-            
+
             try {
                 let url = '/api/watch-together/videos?regionCode=IN&maxResults=20';
                 if (nextPageToken) {
                     url += `&pageToken=${nextPageToken}`;
                 }
-                
+
                 const response = await fetch(url);
                 const data = await response.json();
-                
+
                 nextPageToken = data.nextPageToken;
                 displayVideos(data.videos, append);
-                
+
                 // Show/hide load more based on nextPageToken
                 loadMoreContainer.classList.remove('hidden');
                 if (nextPageToken) {
@@ -541,11 +606,11 @@
         async function loadCategoryVideos(categoryId, append = false) {
             if (isLoadingVideos) return;
             isLoadingVideos = true;
-            
+
             const container = document.getElementById('videoGrid');
             const loadMoreContainer = document.getElementById('loadMoreContainer');
             const loadingMore = document.getElementById('loadingMore');
-            
+
             if (!append) {
                 container.innerHTML = `
                     <div class="col-span-full text-center py-8">
@@ -557,19 +622,19 @@
             } else {
                 loadingMore.classList.remove('hidden');
             }
-            
+
             try {
                 let url = `/api/watch-together/category/${categoryId}?regionCode=IN&maxResults=20`;
                 if (nextPageToken) {
                     url += `&pageToken=${nextPageToken}`;
                 }
-                
+
                 const response = await fetch(url);
                 const data = await response.json();
-                
+
                 nextPageToken = data.nextPageToken;
                 displayVideos(data.videos, append);
-                
+
                 loadMoreContainer.classList.remove('hidden');
                 if (nextPageToken) {
                     document.getElementById('loadMoreBtn').classList.remove('hidden');
@@ -595,23 +660,23 @@
         async function searchVideos(append = false) {
             const query = document.getElementById('searchInput').value.trim();
             if (!query && !append) return;
-            
+
             if (!append) {
                 currentSearchQuery = query;
                 searchNextPageToken = null;
             }
-            
+
             if (isLoadingVideos) return;
             isLoadingVideos = true;
-            
+
             currentMode = 'search';
             const container = document.getElementById('videoGrid');
             const loadMoreContainer = document.getElementById('loadMoreContainer');
             const loadingMore = document.getElementById('loadingMore');
-            
+
             // Update category buttons to show search is active
             updateCategoryButtons('search');
-            
+
             if (!append) {
                 container.innerHTML = `
                     <div class="col-span-full text-center py-8">
@@ -622,20 +687,20 @@
             } else {
                 loadingMore.classList.remove('hidden');
             }
-            
+
             try {
                 let url = `/api/watch-together/search?query=${encodeURIComponent(currentSearchQuery)}&maxResults=20`;
                 if (searchNextPageToken && append) {
                     url += `&pageToken=${searchNextPageToken}`;
                 }
-                
+
                 const response = await fetch(url);
                 const data = await response.json();
-                
+
                 searchNextPageToken = data.nextPageToken;
                 nextPageToken = searchNextPageToken; // For loadMoreVideos function
                 displayVideos(data.videos, append);
-                
+
                 loadMoreContainer.classList.remove('hidden');
                 if (searchNextPageToken) {
                     document.getElementById('loadMoreBtn').classList.remove('hidden');
@@ -662,9 +727,9 @@
             currentCategory = categoryId;
             currentMode = categoryId === 'all' ? 'home' : 'category';
             nextPageToken = null;
-            
+
             updateCategoryButtons(categoryId);
-            
+
             if (categoryId === 'all') {
                 loadHomeVideos(false);
             } else {
@@ -677,7 +742,7 @@
                 btn.classList.remove('bg-indigo-600', 'text-white');
                 btn.classList.add('bg-gray-200', 'text-gray-700');
             });
-            
+
             const activeBtn = document.getElementById(`cat${activeId}`);
             if (activeBtn) {
                 activeBtn.classList.remove('bg-gray-200', 'text-gray-700');
@@ -697,7 +762,7 @@
 
         function displayVideos(videos, append = false) {
             const container = document.getElementById('videoGrid');
-            
+
             if (videos.length === 0 && !append) {
                 container.innerHTML = `
                     <div class="col-span-full text-center py-8 text-gray-500">
@@ -707,7 +772,7 @@
                 `;
                 return;
             }
-            
+
             const videoCards = videos.map(video => `
                 <div class="video-card bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer"
                      onclick="loadVideo('${video.videoId}', '${escapeHtml(video.title).replace(/'/g, "\\'")}')">
@@ -731,7 +796,7 @@
                     </div>
                 </div>
             `).join('');
-            
+
             if (append) {
                 container.insertAdjacentHTML('beforeend', videoCards);
             } else {
@@ -742,10 +807,10 @@
         // Infinite scroll detection
         function setupInfiniteScroll() {
             const videoListSection = document.getElementById('videoListSection');
-            
+
             videoListSection.addEventListener('scroll', () => {
                 const { scrollTop, scrollHeight, clientHeight } = videoListSection;
-                
+
                 // Load more when user scrolls to bottom (with 200px threshold)
                 if (scrollTop + clientHeight >= scrollHeight - 200 && !isLoadingVideos && nextPageToken) {
                     loadMoreVideos();
@@ -758,16 +823,16 @@
             try {
                 const response = await fetch(`/api/watch-together/room/${roomId}`);
                 const room = await response.json();
-                
+
                 document.getElementById('participantCount').textContent = room.participantCount;
-                
+
                 const participantsList = document.getElementById('participantsList');
                 participantsList.innerHTML = Array.from(room.participants || []).map(p => `
                     <span class="bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded-full">
                         <i class="fas fa-user mr-1"></i>${p}
                     </span>
                 `).join('');
-                
+
             } catch (error) {
                 console.error('Error fetching room info:', error);
             }
@@ -803,7 +868,7 @@
         }
 
         // ==================== Event Listeners ====================
-        document.getElementById('chatForm').addEventListener('submit', function(e) {
+        document.getElementById('chatForm').addEventListener('submit', function (e) {
             e.preventDefault();
             const input = document.getElementById('chatInput');
             const message = input.value.trim();
@@ -813,14 +878,14 @@
             }
         });
 
-        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+        document.getElementById('searchInput').addEventListener('keypress', function (e) {
             if (e.key === 'Enter') {
                 searchVideos();
             }
         });
 
         // Handle page unload
-        window.addEventListener('beforeunload', function() {
+        window.addEventListener('beforeunload', function () {
             if (stompClient) {
                 stompClient.send('/app/leave/' + roomId, {}, JSON.stringify({
                     sender: username,
@@ -830,12 +895,25 @@
         });
 
         // ==================== Initialize ====================
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             connectWebSocket();
             loadHomeVideos(); // Load videos from YouTube home feed
             setupInfiniteScroll(); // Enable infinite scroll
             fetchRoomInfo();
         });
     </script>
+    <script>
+        function toggleTheme() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            updateThemeIcon();
+        }
+        function updateThemeIcon() {
+            const icon = document.getElementById('themeIcon');
+            if (icon) icon.className = document.documentElement.classList.contains('dark') ? 'fas fa-sun' : 'fas fa-moon';
+        }
+        document.addEventListener('DOMContentLoaded', updateThemeIcon);
+    </script>
 </body>
+
 </html>
