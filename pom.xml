@@ -96,6 +96,13 @@
     <artifactId>spring-boot-starter-websocket</artifactId>
 </dependency>
 
+<!-- YouTube Transcript API -->
+<dependency>
+    <groupId>io.github.thoroldvix</groupId>
+    <artifactId>youtube-transcript-api</artifactId>
+    <version>0.4.0</version>
+</dependency>
+
 	</dependencies>
 
 	<build>

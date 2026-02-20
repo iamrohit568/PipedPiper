@@ -12,48 +12,45 @@ import org.springframework.security.web.SecurityFilterChain;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers(
-                    "/",
-                    "/login", 
-                    "/register",
-                    "/generate-title",
-                    "/generate-tags",
-                    "/generate-description",
-                    "/watch-together/**",
-                    "/api/watch-together/**",
-                    "/api/videos/**",
-                    "/api/search/**",
-                    "/api/history/**",
-                    "/ws-watch-together/**",
-                    "/css/**",
-                    "/js/**",
-                    "/images/**",
-                    "/lib/**",
-                    "/static/**"
-                ).permitAll()
-                .anyRequest().authenticated()
-            )
-            .formLogin(form -> form
-                .loginPage("/login")
-                .defaultSuccessUrl("/", true)
-                .permitAll()
-            )
-            .logout(logout -> logout
-                .logoutSuccessUrl("/login?logout")
-                .permitAll()
-            )
-            .csrf(csrf -> csrf
-                .ignoringRequestMatchers("/ws-watch-together/**", "/api/history/**")
-            );
-        return http.build();
-    }
+        @Bean
+        public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+                http
+                                .authorizeHttpRequests(auth -> auth
+                                                .requestMatchers(
+                                                                "/",
+                                                                "/login",
+                                                                "/register",
+                                                                "/generate-title",
+                                                                "/generate-tags",
+                                                                "/generate-description",
+                                                                "/watch-together/**",
+                                                                "/api/watch-together/**",
+                                                                "/api/videos/**",
+                                                                "/api/search/**",
+                                                                "/api/history/**",
+                                                                "/ws-watch-together/**",
+                                                                "/css/**",
+                                                                "/js/**",
+                                                                "/images/**",
+                                                                "/lib/**",
+                                                                "/static/**")
+                                                .permitAll()
+                                                .anyRequest().authenticated())
+                                .formLogin(form -> form
+                                                .loginPage("/login")
+                                                .defaultSuccessUrl("/", true)
+                                                .permitAll())
+                                .logout(logout -> logout
+                                                .logoutSuccessUrl("/login?logout")
+                                                .permitAll())
+                                .csrf(csrf -> csrf
+                                                .ignoringRequestMatchers("/ws-watch-together/**", "/api/history/**",
+                                                                "/api/transcript/**"));
+                return http.build();
+        }
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+        @Bean
+        public PasswordEncoder passwordEncoder() {
+                return new BCryptPasswordEncoder();
+        }
 }

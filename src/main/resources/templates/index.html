@@ -1,10 +1,18 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Piped Piper | YouTube Analytics Platform</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>tailwind.config = { darkMode: 'class' }</script>
+    <script>
+        if (localStorage.getItem('theme') === 'dark' ||
+            (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         /* 3D Background Styles */
@@ -18,23 +26,30 @@
             opacity: 0.15;
             pointer-events: none;
         }
-        
+
         /* Content Layer */
         .content-layer {
             position: relative;
             z-index: 10;
         }
-        
+
         /* Spline-like Animations */
         @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-20px); }
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-20px);
+            }
         }
-        
+
         .floating-card {
             animation: float 6s ease-in-out infinite;
         }
-        
+
         /* Existing Styles */
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -43,15 +58,28 @@
             display: flex;
             flex-direction: column;
             min-height: 100vh;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
-        
+
+        .dark body,
+        :is(.dark body) {
+            background-color: #0f172a;
+            color: #e2e8f0;
+        }
+
         .card {
             background: white;
             border-radius: 12px;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            transition: all 0.3s ease;
         }
-        
+
+        .dark .card {
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
         .btn {
             display: inline-flex;
             align-items: center;
@@ -61,24 +89,72 @@
             border-radius: 8px;
             transition: all 0.2s ease;
         }
-        
+
         .btn-primary {
             background-color: #4f46e5;
             color: white;
         }
-        
+
         .form-input {
             width: 100%;
             padding: 0.75rem 1rem;
             border: 1px solid #e2e8f0;
             border-radius: 8px;
-            transition: border-color 0.2s ease;
+            transition: all 0.3s ease;
+            background: white;
+            color: #1e293b;
         }
-        
+
+        .dark .form-input {
+            background: #1e293b;
+            border-color: rgba(99, 102, 241, 0.3);
+            color: #e2e8f0;
+        }
+
+        .dark .form-input::placeholder {
+            color: #64748b;
+        }
+
+        .dark .form-input:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+        }
+
         .navbar {
             backdrop-filter: blur(8px);
             background-color: rgba(255, 255, 255, 0.8);
             border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .dark .navbar {
+            background-color: rgba(15, 23, 42, 0.85);
+            border-bottom-color: rgba(99, 102, 241, 0.15);
+        }
+
+        /* Theme toggle */
+        .theme-toggle {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            color: #475569;
+        }
+
+        .dark .theme-toggle {
+            background: rgba(99, 102, 241, 0.1);
+            border-color: rgba(99, 102, 241, 0.3);
+            color: #fbbf24;
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.05);
         }
 
         footer {
@@ -90,7 +166,7 @@
 <body class="min-h-screen">
     <!-- 3D Background Container -->
     <div id="threejs-bg"></div>
-    
+
     <!-- Main Content Layer -->
     <div class="content-layer">
         <nav class="navbar fixed top-0 w-full z-50 py-4 px-6 sm:px-8">
@@ -99,47 +175,57 @@
                     <div class="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center">
                         <i class="fab fa-youtube text-white text-lg"></i>
                     </div>
-                    <h1 class="text-xl font-medium text-gray-900">Piped Piper</h1>
+                    <h1 class="text-xl font-medium text-gray-900 dark:text-white">Piped Piper</h1>
                 </div>
                 <div class="flex items-center space-x-6">
-                    <a th:href="@{/}" class="text-gray-600 hover:text-gray-900 transition-colors">
+                    <a th:href="@{/}"
+                        class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
                         Home
                     </a>
                     <form th:action="@{/logout}" method="post" sec:authorize="isAuthenticated()">
-                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                        <button type="submit" class="text-gray-600 hover:text-gray-900 transition-colors">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                        <button type="submit"
+                            class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
                             Logout
                         </button>
                     </form>
-                    <a th:href="@{/login}" class="text-gray-600 hover:text-gray-900 transition-colors" sec:authorize="!isAuthenticated()">
+                    <a th:href="@{/login}"
+                        class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                        sec:authorize="!isAuthenticated()">
                         Login
                     </a>
+                    <button onclick="toggleTheme()" class="theme-toggle" title="Toggle dark/light mode"
+                        id="themeToggle">
+                        <i class="fas fa-moon" id="themeIcon"></i>
+                    </button>
                 </div>
             </div>
         </nav>
 
         <section class="h-screen w-full flex items-center justify-center px-6 pt-16">
             <div class="relative z-10 max-w-4xl mx-auto text-center">
-                <h1 class="hero-text text-5xl sm:text-6xl md:text-7xl text-gray-900 mb-8">
-                    Amplify your <span class="font-medium text-indigo-600">YouTube analytics</span><br>
-                    with <span class="font-medium text-indigo-600">Piped Piper</span><br>
-                    <span class="font-medium text-indigo-600">powered by AI</span>
+                <h1 class="hero-text text-5xl sm:text-6xl md:text-7xl text-gray-900 dark:text-white mb-8">
+                    Amplify your <span class="font-medium text-indigo-600 dark:text-indigo-400">YouTube
+                        analytics</span><br>
+                    with <span class="font-medium text-indigo-600 dark:text-indigo-400">Piped Piper</span><br>
+                    <span class="font-medium text-indigo-600 dark:text-indigo-400">powered by AI</span>
                 </h1>
-                
+
                 <div class="my-12">
-    <a th:href="@{/youtube-view}" class="btn-primary inline-flex items-center justify-center px-12 py-6 text-xl font-medium transform hover:scale-105 transition-transform duration-300 shadow-lg hover:shadow-xl">
-        <i class="fas fa-play mr-3"></i> Start Piped Piper
-    </a>
-</div>
+                    <a th:href="@{/youtube-view}"
+                        class="btn-primary inline-flex items-center justify-center px-12 py-6 text-xl font-medium transform hover:scale-105 transition-transform duration-300 shadow-lg hover:shadow-xl">
+                        <i class="fas fa-play mr-3"></i> Start Piped Piper
+                    </a>
+                </div>
             </div>
         </section>
 
         <section class="max-w-7xl mx-auto py-12 px-6 sm:px-8 text-center">
             <div class="max-w-4xl mx-auto">
-                <h1 class="text-4xl sm:text-5xl font-bold text-gray-900 mb-4">
-                    YouTube <span class="text-indigo-600">Inspector</span>
+                <h1 class="text-4xl sm:text-5xl font-bold text-gray-900 dark:text-white mb-4">
+                    YouTube <span class="text-indigo-600 dark:text-indigo-400">Inspector</span>
                 </h1>
-                <p class="text-xl text-gray-600 mb-8">
+                <p class="text-xl text-gray-600 dark:text-gray-400 mb-8">
                     Get powerful insights into any YouTube video or channel with our comprehensive analytics tools
                 </p>
             </div>
@@ -154,27 +240,23 @@
                             <i class="fas fa-search text-indigo-600 text-xl"></i>
                         </div>
                         <div>
-                            <h2 class="text-2xl font-bold text-gray-900 mb-1">Video Scrapper</h2>
-                            <p class="text-gray-600">Extract detailed information from any YouTube video</p>
+                            <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-1">Video Scrapper</h2>
+                            <p class="text-gray-600 dark:text-gray-400">Extract detailed information from any YouTube
+                                video</p>
                         </div>
                     </div>
 
                     <form th:action="@{/processing}" method="post" class="space-y-6" onsubmit="return validateForm()">
-                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                         <div class="relative">
-                            <input type="text"
-                                   id="videoLink"
-                                   name="videoLink"
-                                   required
-                                   placeholder="Paste YouTube video URL here..."
-                                   class="form-input">
+                            <input type="text" id="videoLink" name="videoLink" required
+                                placeholder="Paste YouTube video URL here..." class="form-input">
                             <div class="absolute right-4 top-1/2 transform -translate-y-1/2">
                                 <i class="fas fa-link text-gray-400"></i>
                             </div>
                         </div>
 
-                        <button type="submit"
-                                class="btn btn-primary w-full">
+                        <button type="submit" class="btn btn-primary w-full">
                             <i class="fas fa-microscope mr-2"></i>
                             Analyze Video
                         </button>
@@ -189,18 +271,14 @@
                         </div>
                         <div>
                             <h2 class="text-2xl font-bold text-gray-900 mb-1">Trending Finder</h2>
-                            <p class="text-gray-600">Discover top videos by keywords</p>
+                            <p class="text-gray-600 dark:text-gray-400">Discover top videos by keywords</p>
                         </div>
                     </div>
 
                     <form th:action="@{/search}" method="get" class="space-y-6">
                         <div class="relative">
-                            <input type="text"
-                                   id="keywords"
-                                   name="keywords"
-                                   required
-                                   placeholder="Enter keywords (e.g., 'tech reviews')"
-                                   class="form-input">
+                            <input type="text" id="keywords" name="keywords" required
+                                placeholder="Enter keywords (e.g., 'tech reviews')" class="form-input">
                             <div class="absolute right-4 top-1/2 transform -translate-y-1/2">
                                 <i class="fas fa-hashtag text-gray-400"></i>
                             </div>
@@ -208,8 +286,7 @@
 
                         <div class="grid grid-cols-2 gap-4">
                             <div class="relative">
-                                <select name="maxResults"
-                                        class="form-input appearance-none">
+                                <select name="maxResults" class="form-input appearance-none">
                                     <option value="5">5 Results</option>
                                     <option value="10" selected>10 Results</option>
                                     <option value="15">15 Results</option>
@@ -222,8 +299,7 @@
                             </div>
 
                             <div class="relative">
-                                <select name="sortBy"
-                                        class="form-input appearance-none">
+                                <select name="sortBy" class="form-input appearance-none">
                                     <option value="viewCount" selected>Most Viewed</option>
                                     <option value="relevance">Most Relevant</option>
                                     <option value="date">Most Recent</option>
@@ -235,8 +311,7 @@
                             </div>
                         </div>
 
-                        <button type="submit"
-                                class="btn btn-primary w-full">
+                        <button type="submit" class="btn btn-primary w-full">
                             <i class="fas fa-rocket mr-2"></i>
                             Find Trending Videos
                         </button>
@@ -250,18 +325,20 @@
                             <i class="fas fa-pen-nib text-purple-600 text-xl"></i>
                         </div>
                         <div>
-                            <h2 class="text-2xl font-bold text-gray-900 mb-1">Content Generator</h2>
-                            <p class="text-gray-600">Generate engaging titles, relevant tags, and compelling descriptions for your videos.</p>
+                            <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-1">Content Generator</h2>
+                            <p class="text-gray-600 dark:text-gray-400">Generate engaging titles, relevant tags, and
+                                compelling
+                                descriptions for your videos.</p>
                         </div>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div class="space-y-4">
-                            <h3 class="text-xl font-semibold text-gray-800">Title Generator</h3>
+                            <h3 class="text-xl font-semibold text-gray-800 dark:text-gray-200">Title Generator</h3>
                             <form action="/generate-title" method="post" class="space-y-4">
-                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                                <input type="text" name="keywords" placeholder="Keywords for title"
-                                       class="form-input" required>
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                                <input type="text" name="keywords" placeholder="Keywords for title" class="form-input"
+                                    required>
                                 <button type="submit" class="btn btn-primary w-full bg-purple-600 hover:bg-purple-700">
                                     <i class="fas fa-heading mr-2"></i>Generate Title
                                 </button>
@@ -269,11 +346,11 @@
                         </div>
 
                         <div class="space-y-4">
-                            <h3 class="text-xl font-semibold text-gray-800">Tag Generator</h3>
+                            <h3 class="text-xl font-semibold text-gray-800 dark:text-gray-200">Tag Generator</h3>
                             <form action="/generate-tags" method="post" class="space-y-4">
-                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                                <input type="text" name="keywords" placeholder="Keywords for tags"
-                                       class="form-input" required>
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                                <input type="text" name="keywords" placeholder="Keywords for tags" class="form-input"
+                                    required>
                                 <button type="submit" class="btn btn-primary w-full bg-purple-600 hover:bg-purple-700">
                                     <i class="fas fa-tags mr-2"></i>Generate Tags
                                 </button>
@@ -281,11 +358,12 @@
                         </div>
 
                         <div class="space-y-4">
-                            <h3 class="text-xl font-semibold text-gray-800">Description Generator</h3>
+                            <h3 class="text-xl font-semibold text-gray-800 dark:text-gray-200">Description Generator
+                            </h3>
                             <form action="/generate-description" method="post" class="space-y-4">
-                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                                 <textarea name="keywords" placeholder="Keywords/brief for description" rows="3"
-                                          class="form-input" required></textarea>
+                                    class="form-input" required></textarea>
                                 <button type="submit" class="btn btn-primary w-full bg-purple-600 hover:bg-purple-700">
                                     <i class="fas fa-align-left mr-2"></i>Generate Description
                                 </button>
@@ -293,14 +371,68 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- AI Video Insights Card -->
+                <div class="card p-8 md:col-span-2 floating-card" style="animation-delay: 1.5s;">
+                    <div class="flex items-center space-x-4 mb-6">
+                        <div class="w-14 h-14 bg-emerald-100 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-brain text-emerald-600 text-xl"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-1">AI Video Insights</h2>
+                            <p class="text-gray-600 dark:text-gray-400">Paste any YouTube link and get an AI-powered
+                                summary — skip the
+                                full video.</p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                        <div class="flex items-start space-x-3">
+                            <div
+                                class="w-8 h-8 bg-emerald-50 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                                <i class="fas fa-bolt text-emerald-500 text-sm"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-gray-800 dark:text-gray-200 text-sm">Instant Summary</h4>
+                                <p class="text-gray-500 text-xs">Get structured insights in seconds</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <div
+                                class="w-8 h-8 bg-emerald-50 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                                <i class="fas fa-comments text-emerald-500 text-sm"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-gray-800 text-sm">Chat with Video</h4>
+                                <p class="text-gray-500 text-xs">Ask follow-up questions with AI</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <div
+                                class="w-8 h-8 bg-emerald-50 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                                <i class="fas fa-key text-emerald-500 text-sm"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-gray-800 text-sm">Key Takeaways</h4>
+                                <p class="text-gray-500 text-xs">Actionable insights & timestamps</p>
+                            </div>
+                        </div>
+                    </div>
+                    <a th:href="@{/transcript}"
+                        class="btn btn-primary w-full bg-emerald-600 hover:bg-emerald-700 py-3 text-lg">
+                        <i class="fas fa-sparkles mr-2"></i>Get Video Insights
+                    </a>
+                </div>
             </div>
         </section>
 
         <!-- Features Section -->
-        <section id="features" class="max-w-7xl mx-auto px-6 sm:px-8 py-12 bg-indigo-50 rounded-3xl mb-16">
+        <section id="features"
+            class="max-w-7xl mx-auto px-6 sm:px-8 py-12 bg-indigo-50 dark:bg-slate-800/50 rounded-3xl mb-16">
             <div class="text-center mb-12">
-                <h2 class="text-3xl font-bold text-gray-900 mb-4">Powerful Features</h2>
-                <p class="text-gray-600 max-w-2xl mx-auto">Everything you need to analyze and understand YouTube content</p>
+                <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-4">Powerful Features</h2>
+                <p class="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">Everything you need to analyze and
+                    understand YouTube content
+                </p>
             </div>
 
             <div class="grid md:grid-cols-3 gap-8">
@@ -308,8 +440,8 @@
                     <div class="w-16 h-16 bg-indigo-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
                         <i class="fas fa-chart-line text-indigo-600 text-2xl"></i>
                     </div>
-                    <h3 class="text-xl font-bold text-gray-900 mb-2">Comprehensive Analytics</h3>
-                    <p class="text-gray-600">Get detailed video metrics and performance insights</p>
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">Comprehensive Analytics</h3>
+                    <p class="text-gray-600 dark:text-gray-400">Get detailed video metrics and performance insights</p>
                 </div>
 
                 <div class="card p-6 text-center hover:border-indigo-200 transition-colors">
@@ -317,7 +449,7 @@
                         <i class="fas fa-copy text-indigo-600 text-2xl"></i>
                     </div>
                     <h3 class="text-xl font-bold text-gray-900 mb-2">One-Click Copy</h3>
-                    <p class="text-gray-600">Easily copy titles, tags, and descriptions</p>
+                    <p class="text-gray-600 dark:text-gray-400">Easily copy titles, tags, and descriptions</p>
                 </div>
 
                 <div class="card p-6 text-center hover:border-indigo-200 transition-colors">
@@ -325,7 +457,7 @@
                         <i class="fas fa-bolt text-indigo-600 text-2xl"></i>
                     </div>
                     <h3 class="text-xl font-bold text-gray-900 mb-2">Instant Results</h3>
-                    <p class="text-gray-600">Fast processing with our optimized API</p>
+                    <p class="text-gray-600 dark:text-gray-400">Fast processing with our optimized API</p>
                 </div>
             </div>
         </section>
@@ -336,37 +468,38 @@
                 <div class="grid md:grid-cols-4 gap-8 text-center">
                     <div>
                         <div class="text-3xl font-bold text-indigo-600 mb-2">100+</div>
-                        <div class="text-gray-600">Videos Analyzed</div>
+                        <div class="text-gray-600 dark:text-gray-400">Videos Analyzed</div>
                     </div>
                     <div>
                         <div class="text-3xl font-bold text-indigo-600 mb-2">50+</div>
-                        <div class="text-gray-600">Happy Users</div>
+                        <div class="text-gray-600 dark:text-gray-400">Happy Users</div>
                     </div>
                     <div>
                         <div class="text-3xl font-bold text-indigo-600 mb-2">99.9%</div>
-                        <div class="text-gray-600">Uptime</div>
+                        <div class="text-gray-600 dark:text-gray-400">Uptime</div>
                     </div>
                     <div>
                         <div class="text-3xl font-bold text-indigo-600 mb-2">24/7</div>
-                        <div class="text-gray-600">Available</div>
+                        <div class="text-gray-600 dark:text-gray-400">Available</div>
                     </div>
                 </div>
             </div>
         </section>
 
-        <footer class="py-8 px-6 sm:px-8 border-t border-gray-200 bg-white">
+        <footer
+            class="py-8 px-6 sm:px-8 border-t border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 transition-colors duration-300">
             <div class="max-w-7xl mx-auto">
                 <div class="flex flex-col md:flex-row justify-between items-center">
                     <div class="flex items-center space-x-3 mb-4 md:mb-0">
                         <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
                             <i class="fab fa-youtube text-white text-sm"></i>
                         </div>
-                        <span class="text-gray-900 font-medium">Piped Piper</span>
+                        <span class="text-gray-900 dark:text-white font-medium">Piped Piper</span>
                     </div>
                     <div class="flex space-x-6">
-                        <a href="#" class="text-gray-500 hover:text-gray-700">Terms</a>
-                        <a href="#" class="text-gray-500 hover:text-gray-700">Privacy</a>
-                        <a href="#" class="text-gray-500 hover:text-gray-700">Contact</a>
+                        <a href="#" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">Terms</a>
+                        <a href="#" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">Privacy</a>
+                        <a href="#" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">Contact</a>
                     </div>
                 </div>
                 <div class="mt-6 text-center md:text-left text-sm text-gray-500">
@@ -379,9 +512,26 @@
     <!-- Three.js Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.min.js"></script>
-    
+
     <!-- Three.js Implementation -->
     <script>
+        // ====================
+        // THEME TOGGLE
+        // ====================
+        function toggleTheme() {
+            const html = document.documentElement;
+            const isDark = html.classList.toggle('dark');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            updateThemeIcon();
+        }
+        function updateThemeIcon() {
+            const icon = document.getElementById('themeIcon');
+            if (icon) {
+                icon.className = document.documentElement.classList.contains('dark') ? 'fas fa-sun' : 'fas fa-moon';
+            }
+        }
+        document.addEventListener('DOMContentLoaded', updateThemeIcon);
+
         // Initialize 3D Scene
         const container = document.getElementById('threejs-bg');
         const scene = new THREE.Scene();
@@ -415,19 +565,19 @@
         for (let i = 0; i < 8; i++) {
             const geometry = geometries[Math.floor(Math.random() * geometries.length)];
             const mesh = new THREE.Mesh(geometry, material.clone());
-            
+
             mesh.position.set(
                 (Math.random() - 0.5) * 20,
                 (Math.random() - 0.5) * 10,
                 Math.random() * -50
             );
-            
+
             mesh.rotation.set(
                 Math.random() * Math.PI,
                 Math.random() * Math.PI,
                 0
             );
-            
+
             mesh.scale.setScalar(2 + Math.random() * 3);
             scene.add(mesh);
             shapes.push(mesh);
@@ -436,18 +586,18 @@
         // Lighting (Spline-style soft lighting)
         const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
         scene.add(ambientLight);
-        
+
         const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
         directionalLight.position.set(1, 1, 1);
         scene.add(directionalLight);
-        
+
         const backLight = new THREE.DirectionalLight(0x7c3aed, 0.3);
         backLight.position.set(-1, -1, -1);
         scene.add(backLight);
 
         // Camera Position
         camera.position.z = 15;
-        
+
         // Smooth Orbit Controls (Spline-like interaction)
         const controls = new THREE.OrbitControls(camera, renderer.domElement);
         controls.enableZoom = false;
@@ -460,17 +610,17 @@
         // Animation Loop
         function animate() {
             requestAnimationFrame(animate);
-            
+
             // Gentle shape animations
             shapes.forEach((shape, index) => {
                 shape.rotation.x += 0.001 * (index + 1);
                 shape.rotation.y += 0.002 * (index + 1);
             });
-            
+
             controls.update();
             renderer.render(scene, camera);
         }
-        
+
         animate();
 
         // Responsive Handling
@@ -484,7 +634,7 @@
         document.addEventListener('mousemove', (e) => {
             const x = (e.clientX / window.innerWidth) * 2 - 1;
             const y = (e.clientY / window.innerHeight) * 2 - 1;
-            
+
             camera.position.x = x * 2;
             camera.position.y = -y * 2;
             camera.lookAt(scene.position);
@@ -501,4 +651,5 @@
         }
     </script>
 </body>
+
 </html>

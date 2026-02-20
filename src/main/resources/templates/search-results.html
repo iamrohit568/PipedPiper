@@ -1,85 +1,130 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Search Results | Piped Piper</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>tailwind.config = { darkMode: 'class' }</script>
+    <script>
+        if (localStorage.getItem('theme') === 'dark' ||
+            (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         .video-card {
             transition: all 0.2s ease;
             border: 1px solid #e2e8f0;
+            background: white;
         }
-        
+
+        .dark .video-card {
+            background: rgba(30, 41, 59, 0.8);
+            border-color: rgba(99, 102, 241, 0.2);
+        }
+
         .video-card:hover {
             transform: translateY(-2px);
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
             border-color: #c7d2fe;
         }
-        
+
         .aspect-16-9 {
             aspect-ratio: 16 / 9;
         }
-        
+
         @media (max-width: 640px) {
             .results-title {
                 font-size: 1.5rem;
             }
         }
+
+        .theme-toggle {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            color: #475569;
+        }
+
+        .dark .theme-toggle {
+            background: rgba(99, 102, 241, 0.1);
+            border-color: rgba(99, 102, 241, 0.3);
+            color: #fbbf24;
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.05);
+        }
     </style>
 </head>
-<body class="min-h-screen bg-gray-50">
+
+<body class="min-h-screen bg-gray-50 dark:bg-slate-950 transition-colors duration-300">
     <!-- Navigation -->
-    <nav class="sticky top-0 z-50 py-4 px-6 sm:px-8 bg-white border-b border-gray-100">
+    <nav
+        class="sticky top-0 z-50 py-4 px-6 sm:px-8 bg-white dark:bg-slate-900/90 border-b border-gray-100 dark:border-gray-800 backdrop-blur transition-colors duration-300">
         <div class="max-w-7xl mx-auto flex justify-between items-center">
             <div class="flex items-center space-x-3">
                 <div class="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center">
                     <i class="fab fa-youtube text-white text-lg"></i>
                 </div>
-                <h1 class="text-xl font-semibold text-gray-900">Piped Piper</h1>
+                <h1 class="text-xl font-semibold text-gray-900 dark:text-white">Piped Piper</h1>
             </div>
-            <a th:href="@{/}" class="btn btn-secondary">
-                <i class="fas fa-home mr-2"></i>Home
-            </a>
-        </div>
+            <div class="flex items-center space-x-3">
+                <button onclick="toggleTheme()" class="theme-toggle" id="themeToggle">
+                    <i class="fas fa-moon" id="themeIcon"></i>
+                </button>
+                <a th:href="@{/}" class="btn btn-secondary">
+                    <i class="fas fa-home mr-2"></i>Home
+                </a>
+            </div>
     </nav>
 
     <main class="max-w-7xl mx-auto py-8 px-6 sm:px-8">
         <div class="text-center mb-8">
-            <h1 class="results-title text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
-                Results for: <span class="text-indigo-600" th:text="${keywords}"></span>
+            <h1 class="results-title text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                Results for: <span class="text-indigo-600 dark:text-indigo-400" th:text="${keywords}"></span>
             </h1>
-            <p class="text-gray-600" th:text="${videos.size() + ' videos found'}"></p>
+            <p class="text-gray-600 dark:text-gray-400" th:text="${videos.size() + ' videos found'}"></p>
         </div>
 
         <!-- Video Grid -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div th:each="video : ${videos}" class="video-card bg-white rounded-lg overflow-hidden">
+            <div th:each="video : ${videos}" class="video-card rounded-lg overflow-hidden">
                 <!-- Thumbnail -->
                 <div class="aspect-16-9 overflow-hidden">
                     <img th:src="${video.thumbnailUrl}" alt="Video thumbnail" class="w-full h-full object-cover">
                 </div>
-                
+
                 <div class="p-4 sm:p-6">
                     <!-- Title -->
-                    <h3 class="text-lg font-bold text-gray-900 mb-2 line-clamp-2" th:text="${video.title}"></h3>
-                    
+                    <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2 line-clamp-2"
+                        th:text="${video.title}"></h3>
+
                     <!-- Metadata -->
-                    <div class="flex justify-between items-center text-sm text-gray-500 mb-4">
+                    <div class="flex justify-between items-center text-sm text-gray-500 dark:text-gray-400 mb-4">
                         <div class="flex items-center">
                             <i class="fas fa-eye mr-1"></i>
-                            <span th:text="${#numbers.formatDecimal(video.viewCount, 0, 'COMMA', 0, 'POINT') + ' views'}"></span>
+                            <span
+                                th:text="${#numbers.formatDecimal(video.viewCount, 0, 'COMMA', 0, 'POINT') + ' views'}"></span>
                         </div>
                         <div class="flex items-center">
                             <i class="far fa-calendar-alt mr-1"></i>
                             <span th:text="${video.publishedAt}"></span>
                         </div>
                     </div>
-                    
+
                     <!-- Watch Button -->
-                    <a th:href="${video.url}" target="_blank"
-                       class="btn btn-primary w-full">
+                    <a th:href="${video.url}" target="_blank" class="btn btn-primary w-full">
                         <i class="fab fa-youtube mr-2"></i>Watch
                     </a>
                 </div>
@@ -87,40 +132,40 @@
         </div>
 
         <!-- Add this after the video grid -->
-<div th:if="${nextPageToken}" class="mt-8 text-center">
-    <form th:action="@{/search}" method="get" class="inline-flex">
-        <input type="hidden" name="keywords" th:value="${keywords}">
-        <input type="hidden" name="maxResults" th:value="${maxResults}">
-        <input type="hidden" name="sortBy" th:value="${sortBy}">
-        <input type="hidden" name="pageToken" th:value="${nextPageToken}">
-        <button type="submit" class="btn btn-primary">
-            <i class="fas fa-plus-circle mr-2"></i>Load More Videos
-        </button>
-    </form>
-</div>
+        <div th:if="${nextPageToken}" class="mt-8 text-center">
+            <form th:action="@{/search}" method="get" class="inline-flex">
+                <input type="hidden" name="keywords" th:value="${keywords}">
+                <input type="hidden" name="maxResults" th:value="${maxResults}">
+                <input type="hidden" name="sortBy" th:value="${sortBy}">
+                <input type="hidden" name="pageToken" th:value="${nextPageToken}">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-plus-circle mr-2"></i>Load More Videos
+                </button>
+            </form>
+        </div>
 
         <!-- Update the New Search Button section -->
-<div class="mt-12 text-center space-x-4">
-    <a th:href="@{/}" 
-       class="btn btn-secondary inline-flex">
-        <i class="fas fa-search mr-2"></i>New Search
-    </a>
-    <a th:href="@{'/search?keywords=' + ${keywords} + '&maxResults=' + ${maxResults} + '&sortBy=' + ${sortBy}}" 
-       class="btn btn-secondary inline-flex" th:if="${nextPageToken}">
-        <i class="fas fa-sync-alt mr-2"></i>Refresh Results
-    </a>
-</div>
+        <div class="mt-12 text-center space-x-4">
+            <a th:href="@{/}" class="btn btn-secondary inline-flex">
+                <i class="fas fa-search mr-2"></i>New Search
+            </a>
+            <a th:href="@{'/search?keywords=' + ${keywords} + '&maxResults=' + ${maxResults} + '&sortBy=' + ${sortBy}}"
+                class="btn btn-secondary inline-flex" th:if="${nextPageToken}">
+                <i class="fas fa-sync-alt mr-2"></i>Refresh Results
+            </a>
+        </div>
     </main>
 
     <!-- Footer -->
-    <footer class="py-8 px-6 sm:px-8 border-t border-gray-200 mt-12">
+    <footer
+        class="py-8 px-6 sm:px-8 border-t border-gray-200 dark:border-gray-800 mt-12 transition-colors duration-300">
         <div class="max-w-7xl mx-auto">
             <div class="flex flex-col md:flex-row justify-between items-center">
                 <div class="flex items-center space-x-3 mb-4 md:mb-0">
                     <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
                         <i class="fab fa-youtube text-white text-sm"></i>
                     </div>
-                    <span class="text-gray-900 font-medium">Piped Piper</span>
+                    <span class="text-gray-900 dark:text-white font-medium">Piped Piper</span>
                 </div>
                 <div class="flex space-x-6">
                     <a href="#" class="text-gray-500 hover:text-gray-700">Terms</a>
@@ -128,10 +173,23 @@
                     <a href="#" class="text-gray-500 hover:text-gray-700">Contact</a>
                 </div>
             </div>
-            <div class="mt-6 text-center md:text-left text-sm text-gray-500">
+            <div class="mt-6 text-center md:text-left text-sm text-gray-500 dark:text-gray-400">
                 &copy; 2025 Piped Piper. All rights reserved.
             </div>
         </div>
     </footer>
+    <script>
+        function toggleTheme() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            updateThemeIcon();
+        }
+        function updateThemeIcon() {
+            const icon = document.getElementById('themeIcon');
+            if (icon) icon.className = document.documentElement.classList.contains('dark') ? 'fas fa-sun' : 'fas fa-moon';
+        }
+        document.addEventListener('DOMContentLoaded', updateThemeIcon);
+    </script>
 </body>
+
 </html>
