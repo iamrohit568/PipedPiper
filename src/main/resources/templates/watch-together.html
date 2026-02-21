@@ -325,6 +325,8 @@
                     handleVideoSync(syncMessage);
                 });
 
+
+
                 // Subscribe to personal sync response
                 stompClient.subscribe('/user/queue/sync-response', function (message) {
                     const syncMessage = JSON.parse(message.body);
@@ -902,6 +904,12 @@
             fetchRoomInfo();
         });
     </script>
+    <footer
+        class="bg-white dark:bg-slate-900/80 border-t dark:border-gray-800 mt-12 py-8 px-6 transition-colors duration-300">
+        <div class="max-w-7xl mx-auto text-center text-gray-500 dark:text-gray-400">
+            &copy; 2026 Piped Piper. All rights reserved.
+        </div>
+    </footer>
     <script>
         function toggleTheme() {
             const isDark = document.documentElement.classList.toggle('dark');
