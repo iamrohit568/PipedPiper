@@ -765,14 +765,45 @@
         function removeLoadingMessage(id) { const el = document.getElementById(id); if (el) el.remove(); }
         function scrollChatToBottom() { const c = document.getElementById('chatContainer'); setTimeout(() => { c.scrollTop = c.scrollHeight; }, 100); }
 
+        // Universal Copy function that works on HTTP and HTTPS
+        function copyToClipboard(text, feedbackId) {
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text).then(() => {
+                    if (feedbackId) showCopyFeedback(feedbackId);
+                    else alert('Copied to clipboard!');
+                });
+            } else {
+                // Fallback for non-HTTPS (HTTP) environments
+                const textArea = document.createElement("textarea");
+                textArea.value = text;
+                textArea.style.position = "fixed";
+                textArea.style.left = "-999999px";
+                textArea.style.top = "-999999px";
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    if (feedbackId) showCopyFeedback(feedbackId);
+                    else alert('Copied to clipboard!');
+                } catch (err) {
+                    console.error('Fallback copy failed', err);
+                }
+                document.body.removeChild(textArea);
+            }
+        }
+
         function copySummary() {
-            navigator.clipboard.writeText(document.getElementById('summaryContent').innerText).then(() => showCopyFeedback('copyFeedback'));
+            const text = document.getElementById('summaryContent').innerText;
+            copyToClipboard(text, 'copyFeedback');
         }
         function copyTranscript() {
-            navigator.clipboard.writeText(document.getElementById('transcriptText').innerText).then(() => alert('Transcript copied!'));
+            const text = document.getElementById('transcriptText').innerText;
+            copyToClipboard(text);
         }
         function showCopyFeedback(id) {
             const el = document.getElementById(id);
+            if (!el) return;
             el.classList.add('show');
             setTimeout(() => el.classList.remove('show'), 2000);
         }

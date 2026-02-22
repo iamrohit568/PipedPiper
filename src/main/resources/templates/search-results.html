@@ -65,6 +65,49 @@
         .theme-toggle:hover {
             transform: scale(1.05);
         }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background-color: #4f46e5;
+            color: white;
+            border: 1px solid transparent;
+        }
+
+        .btn-primary:hover {
+            background-color: #4338ca;
+        }
+
+        .btn-secondary {
+            background-color: white;
+            color: #4f46e5;
+            border: 1px solid #e2e8f0;
+        }
+
+        .dark .btn-secondary {
+            background-color: rgba(30, 41, 59, 0.5);
+            color: #e2e8f0;
+            border-color: rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-secondary:hover {
+            background-color: #f8fafc;
+            border-color: #c7d2fe;
+        }
+
+        .dark .btn-secondary:hover {
+            background-color: rgba(99, 102, 241, 0.1);
+            border-color: #6366f1;
+            color: #6366f1;
+        }
     </style>
 </head>
 

@@ -74,9 +74,21 @@
             border: 1px solid #e2e8f0;
         }
 
+        .dark .btn-secondary {
+            background-color: rgba(30, 41, 59, 0.5);
+            color: #e2e8f0;
+            border-color: rgba(99, 102, 241, 0.3);
+        }
+
         .btn-secondary:hover {
             background-color: #f8fafc;
             border-color: #c7d2fe;
+        }
+
+        .dark .btn-secondary:hover {
+            background-color: rgba(99, 102, 241, 0.1);
+            border-color: #6366f1;
+            color: #6366f1;
         }
 
         /* Navbar */
@@ -350,13 +362,46 @@
                 ? document.getElementById(elementId).getAttribute("src")
                 : document.getElementById(elementId).innerText;
 
-            navigator.clipboard.writeText(text).then(() => {
-                const copiedMsg = document.getElementById(copiedId);
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text).then(() => {
+                    showFeedback(copiedId);
+                }).catch(err => {
+                    console.error('Failed to copy text: ', err);
+                    fallbackCopy(text, copiedId);
+                });
+            } else {
+                fallbackCopy(text, copiedId);
+            }
+        }
+
+        function fallbackCopy(text, copiedId) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            textArea.style.position = "fixed";
+            textArea.style.left = "-999999px";
+            textArea.style.top = "-999999px";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                showFeedback(copiedId);
+            } catch (err) {
+                console.error('Fallback copy failed', err);
+            }
+            document.body.removeChild(textArea);
+        }
+
+        function showFeedback(copiedId) {
+            const copiedMsg = document.getElementById(copiedId);
+            if (copiedMsg) {
                 copiedMsg.classList.remove('hidden');
                 setTimeout(() => {
                     copiedMsg.classList.add('hidden');
                 }, 2000);
-            });
+            } else {
+                alert('Copied to clipboard!');
+            }
         }
     </script>
     <script>
