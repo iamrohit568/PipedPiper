@@ -75,6 +75,29 @@
             background-color: #4338ca;
         }
 
+        .btn-secondary {
+            background-color: white;
+            color: #4f46e5;
+            border: 1px solid #e2e8f0;
+        }
+
+        .dark .btn-secondary {
+            background-color: rgba(30, 41, 59, 0.5);
+            color: #e2e8f0;
+            border-color: rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-secondary:hover {
+            background-color: #f8fafc;
+            border-color: #c7d2fe;
+        }
+
+        .dark .btn-secondary:hover {
+            background-color: rgba(99, 102, 241, 0.1);
+            border-color: #6366f1;
+            color: #6366f1;
+        }
+
         .copy-button {
             background-color: #e2e8f0;
             color: #475569;
@@ -188,15 +211,47 @@
     <script>
         function copyContent() {
             const content = document.getElementById('generatedContent').innerText;
-            navigator.clipboard.writeText(content).then(() => {
-                const message = document.getElementById('copiedMessage');
+
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(content).then(() => {
+                    showFeedback();
+                }).catch(err => {
+                    console.error('Failed to copy text: ', err);
+                    fallbackCopy(content);
+                });
+            } else {
+                fallbackCopy(content);
+            }
+        }
+
+        function fallbackCopy(text) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            textArea.style.position = "fixed";
+            textArea.style.left = "-999999px";
+            textArea.style.top = "-999999px";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                showFeedback();
+            } catch (err) {
+                console.error('Fallback copy failed', err);
+            }
+            document.body.removeChild(textArea);
+        }
+
+        function showFeedback() {
+            const message = document.getElementById('copiedMessage');
+            if (message) {
                 message.classList.remove('hidden');
                 setTimeout(() => {
                     message.classList.add('hidden');
                 }, 2000);
-            }).catch(err => {
-                console.error('Failed to copy text: ', err);
-            });
+            } else {
+                alert('Copied to clipboard!');
+            }
         }
     </script>
     <script>

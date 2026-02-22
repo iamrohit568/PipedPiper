@@ -842,13 +842,47 @@
 
         function copyRoomLink() {
             const link = window.location.href;
-            navigator.clipboard.writeText(link).then(() => {
-                const toast = document.getElementById('copyToast');
+
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(link).then(() => {
+                    showCopyToast();
+                }).catch(err => {
+                    console.error('Failed to copy text: ', err);
+                    fallbackCopy(link);
+                });
+            } else {
+                fallbackCopy(link);
+            }
+        }
+
+        function fallbackCopy(text) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            textArea.style.position = "fixed";
+            textArea.style.left = "-999999px";
+            textArea.style.top = "-999999px";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                showCopyToast();
+            } catch (err) {
+                console.error('Fallback copy failed', err);
+            }
+            document.body.removeChild(textArea);
+        }
+
+        function showCopyToast() {
+            const toast = document.getElementById('copyToast');
+            if (toast) {
                 toast.classList.remove('translate-y-20', 'opacity-0');
                 setTimeout(() => {
                     toast.classList.add('translate-y-20', 'opacity-0');
                 }, 3000);
-            });
+            } else {
+                alert('Room link copied to clipboard!');
+            }
         }
 
         // ==================== Utility Functions ====================

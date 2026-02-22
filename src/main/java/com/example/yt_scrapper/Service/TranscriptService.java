@@ -60,9 +60,159 @@ public class TranscriptService {
     @Autowired
     private ytservice youtubeService;
 
-    private final YoutubeTranscriptApi transcriptApi = TranscriptApiFactory.createDefault();
+    // Proxy config
+    @Value("${proxy.host:}")
+    private String proxyHost;
+
+    @Value("${proxy.port:}")
+    private String proxyPort;
+
+    @Value("${proxy.user:}")
+    private String proxyUser;
+
+    @Value("${proxy.password:}")
+    private String proxyPassword;
+
+    // Transcript API config
+    @Value("${transcript.api.provider:local}")
+    private String transcriptApiProvider;
+
+    @Value("${transcript.api.key:}")
+    private String transcriptApiKey;
+
+    private YoutubeTranscriptApi transcriptApi;
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final RestTemplate restTemplate = new RestTemplate();
+
+    @jakarta.annotation.PostConstruct
+    public void init() {
+        logger.info("TranscriptService initializing with provider: {}", transcriptApiProvider);
+        this.transcriptApi = initializeTranscriptApi();
+    }
+
+    private YoutubeTranscriptApi initializeTranscriptApi() {
+        // ONLY configure system-level proxies if we are using the local scraper.
+        if ("local".equalsIgnoreCase(transcriptApiProvider) && proxyHost != null && !proxyHost.isBlank()) {
+            logger.info("Initializing Local Transcript API with custom ProxyYoutubeClient: {}:{}", proxyHost,
+                    proxyPort);
+            try {
+                int port = Integer.parseInt(proxyPort != null && !proxyHost.isBlank() ? proxyPort : "8080");
+
+                // Enable Basic auth for proxying and tunneling in Java 11+
+                System.setProperty("jdk.http.auth.proxying.disabledSchemes", "");
+                System.setProperty("jdk.http.auth.tunneling.disabledSchemes", "");
+
+                // Set system properties for RestTemplate/HttpURLConnection to use proxy
+                System.setProperty("http.proxyHost", proxyHost);
+                System.setProperty("http.proxyPort", String.valueOf(port));
+                System.setProperty("https.proxyHost", proxyHost);
+                System.setProperty("https.proxyPort", String.valueOf(port));
+
+                io.github.thoroldvix.api.YoutubeClient customClient = new ProxyYoutubeClient(proxyHost, port, proxyUser,
+                        proxyPassword);
+                return TranscriptApiFactory.createWithClient(customClient);
+            } catch (Exception e) {
+                logger.error("Failed to configure custom proxy client for Transcript API", e);
+            }
+        } else if (!"local".equalsIgnoreCase(transcriptApiProvider)) {
+            logger.info("Bypassing local proxy initialization (using provider: {})", transcriptApiProvider);
+        }
+
+        // Set a realistic User-Agent for all requests (helps with bot detection)
+        System.setProperty("http.agent",
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36");
+
+        return TranscriptApiFactory.createDefault();
+    }
+
+    /**
+     * Custom implementation of YoutubeClient to handle proxy authentication
+     * reliably.
+     */
+    private class ProxyYoutubeClient implements io.github.thoroldvix.api.YoutubeClient {
+        private final java.net.http.HttpClient httpClient;
+        private final String userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36";
+
+        public ProxyYoutubeClient(String host, int port, String user, String pass) {
+            java.net.http.HttpClient.Builder builder = java.net.http.HttpClient.newBuilder()
+                    .proxy(java.net.ProxySelector.of(new java.net.InetSocketAddress(host, port)))
+                    .followRedirects(java.net.http.HttpClient.Redirect.ALWAYS);
+
+            if (user != null && !user.isBlank()) {
+                builder.authenticator(new java.net.Authenticator() {
+                    @Override
+                    protected java.net.PasswordAuthentication getPasswordAuthentication() {
+                        return new java.net.PasswordAuthentication(user, pass.toCharArray());
+                    }
+                });
+            }
+            this.httpClient = builder.build();
+        }
+
+        @Override
+        public String get(String url, Map<String, String> params)
+                throws io.github.thoroldvix.api.TranscriptRetrievalException {
+            try {
+                StringBuilder urlBuilder = new StringBuilder(url);
+                if (params != null && !params.isEmpty()) {
+                    boolean first = !url.contains("?");
+                    for (Map.Entry<String, String> entry : params.entrySet()) {
+                        urlBuilder.append(first ? "?" : "&")
+                                .append(java.net.URLEncoder.encode(entry.getKey(),
+                                        java.nio.charset.StandardCharsets.UTF_8))
+                                .append("=")
+                                .append(java.net.URLEncoder.encode(entry.getValue(),
+                                        java.nio.charset.StandardCharsets.UTF_8));
+                        first = false;
+                    }
+                }
+
+                java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder()
+                        .uri(java.net.URI.create(urlBuilder.toString()))
+                        .header("User-Agent", userAgent)
+                        .GET()
+                        .build();
+
+                java.net.http.HttpResponse<String> response = httpClient.send(request,
+                        java.net.http.HttpResponse.BodyHandlers.ofString());
+                if (response.statusCode() >= 400) {
+                    throw new io.github.thoroldvix.api.TranscriptRetrievalException(
+                            "YouTube request failed with status " + response.statusCode(),
+                            String.valueOf(response.statusCode()));
+                }
+                return response.body();
+            } catch (Exception e) {
+                if (e instanceof io.github.thoroldvix.api.TranscriptRetrievalException)
+                    throw (io.github.thoroldvix.api.TranscriptRetrievalException) e;
+                throw new io.github.thoroldvix.api.TranscriptRetrievalException("Failed to fetch: " + e.getMessage(),
+                        e);
+            }
+        }
+
+        @Override
+        public String post(String url, String body) throws io.github.thoroldvix.api.TranscriptRetrievalException {
+            try {
+                java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder()
+                        .uri(java.net.URI.create(url))
+                        .header("Content-Type", "application/json")
+                        .header("User-Agent", userAgent)
+                        .POST(java.net.http.HttpRequest.BodyPublishers.ofString(body))
+                        .build();
+
+                java.net.http.HttpResponse<String> response = httpClient.send(request,
+                        java.net.http.HttpResponse.BodyHandlers.ofString());
+                if (response.statusCode() >= 400) {
+                    throw new io.github.thoroldvix.api.TranscriptRetrievalException(
+                            "YouTube POST fail: " + response.statusCode(), String.valueOf(response.statusCode()));
+                }
+                return response.body();
+            } catch (Exception e) {
+                if (e instanceof io.github.thoroldvix.api.TranscriptRetrievalException)
+                    throw (io.github.thoroldvix.api.TranscriptRetrievalException) e;
+                throw new io.github.thoroldvix.api.TranscriptRetrievalException("Failed to post: " + e.getMessage(), e);
+            }
+        }
+    }
 
     // ========================
     // SYSTEM PROMPTS
@@ -252,9 +402,78 @@ public class TranscriptService {
     }
 
     /**
-     * Fetch transcript using youtube-transcript-api library.
+     * Fetch transcript using the configured provider.
      */
     private String fetchTranscript(String videoId) {
+        logger.info("Fetch attempt for videoId: {} using provider: {}", videoId, transcriptApiProvider);
+
+        if ("supadata".equalsIgnoreCase(transcriptApiProvider)) {
+            if (transcriptApiKey == null || transcriptApiKey.isBlank()) {
+                throw new TranscriptNotAvailableException(
+                        "Supadata provider selected but TRANSCRIPT_API_KEY is missing.");
+            }
+            try {
+                return fetchTranscriptFromSupadata(videoId);
+            } catch (Exception e) {
+                logger.error("Supadata fetch failed: {}", e.getMessage());
+                throw new TranscriptNotAvailableException(
+                        "Supadata API failed: " + e.getMessage() + ". Check your API key and quota.");
+            }
+        }
+
+        return fetchTranscriptLocally(videoId);
+    }
+
+    /**
+     * Fetch transcript from Supadata API.
+     */
+    private String fetchTranscriptFromSupadata(String videoId) throws Exception {
+        logger.info("Requesting transcript from Supadata.ai for: {}", videoId);
+        try {
+            String videoUrl = "https://www.youtube.com/watch?v=" + videoId;
+
+            // Use URI to prevent RestTemplate from double-encoding the query parameters
+            java.net.URI uri = org.springframework.web.util.UriComponentsBuilder
+                    .fromHttpUrl("https://api.supadata.ai/v1/transcript")
+                    .queryParam("url", videoUrl)
+                    .queryParam("text", "true")
+                    .build()
+                    .toUri();
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("x-api-key", transcriptApiKey.trim()); // Trim to avoid accidental spaces
+            headers.set("User-Agent", "PipedPiper/1.0");
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+
+            ResponseEntity<String> response = restTemplate.exchange(uri, HttpMethod.GET, entity, String.class);
+
+            logger.info("Supadata Response Code: {}", response.getStatusCode());
+
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                JsonNode root = objectMapper.readTree(response.getBody());
+                String content = root.path("content").asText();
+                if (content != null && !content.isBlank()) {
+                    logger.info("Successfully received transcript from Supadata ({} chars)", content.length());
+                    return content;
+                }
+            }
+
+            throw new Exception(
+                    "Supadata returned status " + response.getStatusCode() + " with body: " + response.getBody());
+        } catch (HttpClientErrorException e) {
+            String errorBody = e.getResponseBodyAsString();
+            logger.error("Supadata API Error ({}): {}", e.getStatusCode(), errorBody);
+            throw new Exception("Supadata Error " + e.getStatusCode() + ": " + errorBody);
+        } catch (Exception e) {
+            logger.error("Supadata communication error: {}", e.getMessage());
+            throw new Exception(e.getMessage());
+        }
+    }
+
+    /**
+     * Original logic using the local library/scraper.
+     */
+    private String fetchTranscriptLocally(String videoId) {
         try {
             // Try to get English transcript first, then any available language
             TranscriptContent content = transcriptApi.getTranscript(videoId, "en");
@@ -292,7 +511,8 @@ public class TranscriptService {
 
             throw new TranscriptNotAvailableException(
                     "No captions/transcript available for this video. This video may not have captions enabled, " +
-                            "or the captions may be restricted. Try a different video.");
+                            "or the captions may be restricted. Error details: " + e.getMessage()
+                            + ". Try a different video.");
         }
     }
 
